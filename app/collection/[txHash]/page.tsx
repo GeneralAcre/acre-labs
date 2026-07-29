@@ -86,8 +86,8 @@ export default function ClaimDetailPage({
 
   const closed = now !== null && now > claim.event.expiresAt;
   const isMine = !!myAddress && myAddress.toLowerCase() === claim.walletAddress;
-  const backHref = isMine ? "/collection" : `/profile/${claim.walletAddress}`;
-  const backLabel = isMine ? "← Back to Collection" : "← Back to Profile";
+  const backHref = isMine ? "/profile" : `/profile/${claim.walletAddress}`;
+  const backLabel = isMine ? "Back to My Profile" : "Back to Profile";
 
   return (
     <div className="flex flex-1 flex-col">
@@ -123,7 +123,7 @@ export default function ClaimDetailPage({
                 rel="noopener noreferrer"
                 className="normal-case tracking-normal text-brand-red hover:underline"
               >
-                View on SnowTrace ↗
+                View on SnowTrace
               </a>
             </div>
 

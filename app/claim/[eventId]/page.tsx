@@ -273,7 +273,7 @@ export default function ClaimEventPage({
               >
                 View on SnowTrace
               </a>
-              <Link href="/collection" className="pill-dark h-11 px-6 text-sm font-medium">
+              <Link href="/profile" className="pill-dark h-11 px-6 text-sm font-medium">
                 View My Collection
               </Link>
             </div>

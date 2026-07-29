@@ -33,15 +33,17 @@ body {
 }
 
 .brand-gradient {
-  /* Red stays dominant well past the halfway point — content (headline,
-     buttons) needs to read clearly against it, so the fade to black only
-     happens in the final stretch instead of cutting to base by mid-section. */
+  /* Full-strength red only reads as an accent near the top edge — held past
+     the halfway point it turns the whole hero into a wall of saturated red
+     that's hard to read against (thin text, translucent inputs/pills all
+     lose contrast). Darkening quickly to a muted maroon keeps the brand
+     color as a glow instead of the whole backdrop. */
   background: linear-gradient(
     180deg,
     var(--brand-red) 0%,
-    var(--brand-red) 55%,
-    #4a0f10 75%,
-    var(--background) 92%,
+    #8a0710 30%,
+    #2a0508 60%,
+    var(--background) 85%,
     var(--background) 100%
   );
 }

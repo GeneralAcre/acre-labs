@@ -37,6 +37,10 @@ export function txExplorerUrl(txHash: string): string {
   return `${ACTIVE_CHAIN.explorerUrl}/tx/${txHash}`;
 }
 
+export function addressExplorerUrl(address: string): string {
+  return `${ACTIVE_CHAIN.explorerUrl}/address/${address}`;
+}
+
 // Every drop mints from this single AcreLabs-operated contract rather than
 // organizers bringing their own — placeholder until the real ERC-721 drop
 // contract is deployed. Override via env without a code change once it is.

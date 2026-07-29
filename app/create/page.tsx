@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import Link from "next/link";
 import type { EventRecord } from "@/lib/types";
 import { EventBadge } from "@/components/EventBadge";
 import { WalletButton } from "@/components/WalletButton";
@@ -20,9 +21,11 @@ function formatDate(ms: number): string {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+const MAX_SUPPLY_CAP = 200;
+
 // Returns null for anything that isn't a real calendar date in YYYY-MM-DD —
-// the field is now free-typed text (no native date picker), so this is the
-// only thing standing between a typo and an invalid timestamp being submitted.
+// the native date input always hands back this format, but an empty value
+// still needs to fail validation rather than parse as a valid timestamp.
 function endOfDayTimestamp(dateString: string): number | null {
   if (!DATE_RE.test(dateString)) return null;
   const ms = new Date(`${dateString}T23:59:59.999`).getTime();
@@ -174,9 +177,29 @@ export default function CreateDropPage() {
       setError("Title is required.");
       return;
     }
+    if (!location.trim()) {
+      setError("Location is required.");
+      return;
+    }
+    if (!description.trim()) {
+      setError("Description is required.");
+      return;
+    }
+    if (!imageDataUrl) {
+      setError("Badge picture is required.");
+      return;
+    }
     const eventEndTime = endOfDayTimestamp(eventEndDate);
     if (eventEndTime === null) {
       setError("Enter the event end date as YYYY-MM-DD.");
+      return;
+    }
+    if (!maxSupply.trim()) {
+      setError("Max supply is required.");
+      return;
+    }
+    if (Number(maxSupply) > MAX_SUPPLY_CAP) {
+      setError(`Max supply cannot exceed ${MAX_SUPPLY_CAP}.`);
       return;
     }
 
@@ -187,11 +210,11 @@ export default function CreateDropPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title.trim(),
-          description: description.trim() || undefined,
-          location: location.trim() || undefined,
+          description: description.trim(),
+          location: location.trim(),
           eventEndTime,
-          imageUrl: imageDataUrl || undefined,
-          maxSupply: maxSupply.trim() || undefined,
+          imageUrl: imageDataUrl,
+          maxSupply: maxSupply.trim(),
         }),
       });
       const data = await res.json();
@@ -265,11 +288,11 @@ export default function CreateDropPage() {
     );
   }
 
-  const previewEndTime = endOfDayTimestamp(eventEndDate);
-  const previewClosed = now !== null && previewEndTime !== null && now > previewEndTime;
+  const activeEvents = events.filter((event) => !(now !== null && now > event.expiresAt));
+  const historyEvents = events.filter((event) => now !== null && now > event.expiresAt);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 py-16">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-16">
       <div className="flex flex-col gap-2">
         <span className="brand-kicker text-brand-red">[ 01 ] New Drop</span>
         <h1 className="font-heading text-4xl uppercase tracking-tight text-brand-mist sm:text-5xl">
@@ -277,34 +300,9 @@ export default function CreateDropPage() {
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[360px_1fr]">
-        <div className="sticky top-24 self-start">
-          <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-brand-mist/15 bg-brand-surface p-8 text-center shadow-lg">
-            <span className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/40">
-              Preview
-            </span>
-            <EventBadge title={title || "Your Event"} imageUrl={imageDataUrl || undefined} size={120} />
-            <h3 className="font-heading text-xl uppercase tracking-tight text-brand-mist">
-              {title || "Your Event"}
-            </h3>
-            <p className="text-xs text-brand-mist/60">{location || "Location · optional"}</p>
-            {description && <p className="text-xs text-brand-mist/60">{description}</p>}
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                previewClosed ? "bg-brand-red text-brand-mist" : "bg-brand-ink text-brand-mist"
-              }`}
-            >
-              {previewClosed ? "Claim window closed" : "Claim open"}
-            </span>
-            <p className="text-xs text-brand-mist/40">Claim expires 2 hours after the event ends.</p>
-            {maxSupply && (
-              <p className="text-xs text-brand-mist/40">Capped at {maxSupply} badges</p>
-            )}
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-          <div className="flex flex-col gap-2 border-b border-brand-mist/10 pb-6">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_360px]">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
             <label
               htmlFor="title"
               className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
@@ -313,103 +311,107 @@ export default function CreateDropPage() {
             </label>
             <input
               id="title"
+              required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Avalanche Summit Afterparty"
-              className="bg-transparent font-heading text-2xl uppercase tracking-tight text-brand-mist placeholder:text-brand-mist/25 focus:outline-none"
+              className="rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 font-heading text-2xl uppercase tracking-tight text-brand-mist focus:border-brand-mist/40 focus:outline-none"
             />
           </div>
 
-          <div className="flex flex-col gap-2 border-b border-brand-mist/10 pb-6">
+          <div className="flex flex-col gap-2">
             <label
               htmlFor="location"
               className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
             >
-              Location · optional
+              Location
             </label>
             <input
               id="location"
+              required
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="Atlantic Terminal, 139 Flatbush Ave, BK, NY"
-              className="bg-transparent text-sm text-brand-mist placeholder:text-brand-mist/30 focus:outline-none"
+              className="rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 text-sm text-brand-mist focus:border-brand-mist/40 focus:outline-none"
             />
           </div>
 
-          <div className="flex flex-col gap-2 border-b border-brand-mist/10 pb-6">
+          <div className="flex flex-col gap-2">
             <label
               htmlFor="description"
               className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
             >
-              Description · optional
+              Description
             </label>
             <textarea
               id="description"
+              required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What the event was, who hosted it."
-              rows={2}
-              className="resize-none bg-transparent text-sm text-brand-mist placeholder:text-brand-mist/30 focus:outline-none"
+              rows={3}
+              className="resize-none rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 text-sm text-brand-mist focus:border-brand-mist/40 focus:outline-none"
             />
           </div>
 
-          <div className="flex flex-col gap-3 border-b border-brand-mist/10 pb-6">
+          <div className="flex flex-col gap-3">
             <label
               htmlFor="picture"
               className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
             >
-              Badge Picture · optional
+              Badge Picture
             </label>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3">
               <EventBadge title={title || "?"} imageUrl={imageDataUrl || undefined} size={56} />
               <input
                 ref={fileInputRef}
                 id="picture"
                 type="file"
                 accept="image/*"
+                required={!imageDataUrl}
                 onChange={handlePictureChange}
                 className="flex-1 text-xs text-brand-mist/70 file:mr-3 file:rounded-full file:border-0 file:bg-brand-ink file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-brand-mist"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-            <div className="flex flex-col gap-2 border-b border-brand-mist/10 pb-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="eventEndDate"
                 className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
               >
-                Event End Date · YYYY-MM-DD
+                Event End Date
               </label>
               <input
                 id="eventEndDate"
-                type="text"
-                inputMode="numeric"
+                type="date"
+                required
                 value={eventEndDate}
                 onChange={(e) => setEventEndDate(e.target.value)}
-                className="bg-transparent text-sm text-brand-mist focus:outline-none"
+                className="rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 text-sm text-brand-mist focus:border-brand-mist/40 focus:outline-none"
               />
               <p className="text-xs text-brand-mist/40">Claim expires 2 hours after this date.</p>
             </div>
 
-            <div className="flex flex-col gap-2 border-b border-brand-mist/10 pb-6">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="maxSupply"
                 className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
               >
-                Max Supply · optional
+                Max Supply
               </label>
               <input
                 id="maxSupply"
                 type="number"
                 min={1}
+                max={MAX_SUPPLY_CAP}
                 step={1}
+                required
                 value={maxSupply}
                 onChange={(e) => setMaxSupply(e.target.value)}
-                placeholder="Unlimited"
-                className="bg-transparent text-sm text-brand-mist placeholder:text-brand-mist/30 focus:outline-none"
+                className="rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 text-sm text-brand-mist focus:border-brand-mist/40 focus:outline-none"
               />
-              <p className="text-xs text-brand-mist/40">Drop closes early once reached.</p>
+              <p className="text-xs text-brand-mist/40">
+                Capped at {MAX_SUPPLY_CAP} people. Drop closes early once reached.
+              </p>
             </div>
           </div>
 
@@ -423,79 +425,81 @@ export default function CreateDropPage() {
             {submitting ? "Creating…" : "Create drop"}
           </button>
         </form>
-      </div>
 
-      <div className="flex flex-col gap-6 border-t border-brand-mist/10 pt-16">
-        <span className="brand-kicker text-brand-red">[ 02 ] Your Drops</span>
+        <aside className="flex flex-col gap-8">
+          <div className="flex flex-col items-center gap-4">
+            <span className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/40">
+              Preview
+            </span>
+            <EventBadge title={title || "Your Event"} imageUrl={imageDataUrl || undefined} size={160} />
+          </div>
 
-        {events.length === 0 && <p className="text-sm text-brand-mist/50">No drops yet.</p>}
+          <div className="flex flex-col gap-3">
+            <span className="brand-kicker text-brand-red">[ 02 ] Your Drops</span>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {events.map((event) => (
-            <div
-              key={event.id}
-              className="flex flex-col gap-4 rounded-2xl border-2 border-brand-mist/15 bg-brand-surface p-6 shadow-lg"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <EventBadge title={event.title} imageUrl={event.imageUrl} size={44} />
-                  <div className="min-w-0">
-                    <h3 className="font-heading tracking-wide text-brand-red">{event.title}</h3>
-                    <p className="truncate text-xs text-brand-mist/50">
-                      {event.location || "No location set"}
-                    </p>
-                  </div>
+            {activeEvents.length === 0 && (
+              <p className="text-sm text-brand-mist/50">No active drops.</p>
+            )}
+
+            {activeEvents.map((event) => (
+              <div
+                key={event.id}
+                className="flex flex-col gap-3 rounded-xl border border-brand-mist/15 bg-brand-surface p-4"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="truncate font-heading text-sm uppercase tracking-wide text-brand-mist">
+                    {event.title}
+                  </h3>
+                  <span className="whitespace-nowrap rounded-full bg-brand-ink px-2 py-0.5 text-[10px] font-medium text-brand-mist">
+                    Open
+                  </span>
                 </div>
-                <span
-                  className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${
-                    now !== null && now > event.expiresAt
-                      ? "bg-brand-red text-brand-mist"
-                      : "bg-brand-ink text-brand-mist"
-                  }`}
-                >
-                  {now !== null && now > event.expiresAt ? "Closed" : "Open"}
-                </span>
-              </div>
 
-              <div className="flex items-center gap-3">
-                <span className="rounded-lg bg-brand-mist px-4 py-2 font-mono text-2xl font-bold tracking-[0.3em] text-brand-ink">
-                  {event.secretCode}
-                </span>
-                <button
-                  onClick={() => copyCode(event.id, event.secretCode)}
-                  className="rounded-md border border-brand-mist/15 px-3 py-2 text-xs font-medium text-brand-mist hover:bg-brand-ink"
-                >
-                  {copiedId === event.id ? "Copied!" : "Copy code"}
-                </button>
-              </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 truncate rounded-md bg-brand-mist px-3 py-1.5 text-center font-mono text-sm font-bold tracking-[0.25em] text-brand-ink">
+                    {event.secretCode}
+                  </span>
+                  <button
+                    onClick={() => copyCode(event.id, event.secretCode)}
+                    className="whitespace-nowrap rounded-md border border-brand-mist/15 px-2 py-1.5 text-[11px] font-medium text-brand-mist hover:bg-brand-ink"
+                  >
+                    {copiedId === event.id ? "Copied!" : "Copy"}
+                  </button>
+                </div>
 
-              {event.description && (
-                <p className="text-sm text-brand-mist/60">{event.description}</p>
-              )}
-
-              <div className="grid grid-cols-1 gap-1 text-xs text-brand-mist/40 sm:grid-cols-2">
-                <span>Ends {formatDate(event.eventEndTime)}</span>
-                <span>Closes {formatDate(event.expiresAt)}</span>
-                <span>
-                  Claimed {event.claimedCount}
-                  {typeof event.maxSupply === "number" ? ` / ${event.maxSupply}` : " · unlimited"}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 border-t border-brand-mist/10 pt-3">
-                <span className="break-all font-mono text-xs text-brand-mist/50">
-                  {origin}/claim/{event.slug}
-                </span>
                 <button
                   onClick={() => copyLink(event.id, `${origin}/claim/${event.slug}`)}
-                  className="rounded-md border border-brand-mist/15 px-2 py-1 text-[11px] font-medium text-brand-mist hover:bg-brand-ink"
+                  className="rounded-md border border-brand-mist/15 px-2 py-1.5 text-[11px] font-medium text-brand-mist hover:bg-brand-ink"
                 >
-                  {copiedLinkId === event.id ? "Copied!" : "Copy link"}
+                  {copiedLinkId === event.id ? "Link copied!" : "Copy claim link"}
                 </button>
+
+                <p className="text-[11px] text-brand-mist/40">
+                  Claimed {event.claimedCount}
+                  {typeof event.maxSupply === "number" ? ` / ${event.maxSupply}` : " · unlimited"}
+                </p>
               </div>
+            ))}
+          </div>
+
+          {historyEvents.length > 0 && (
+            <div className="flex flex-col gap-1 border-t border-brand-mist/10 pt-6">
+              <span className="brand-kicker mb-2 text-brand-mist/40">History</span>
+              {historyEvents.map((event) => (
+                <Link
+                  key={event.id}
+                  href={`/drop/${event.slug}`}
+                  className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 text-xs text-brand-mist/50 hover:bg-brand-ink hover:text-brand-mist"
+                >
+                  <span className="truncate">{event.title}</span>
+                  <span className="whitespace-nowrap text-brand-mist/30">
+                    Closed {formatDate(event.expiresAt)}
+                  </span>
+                </Link>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </aside>
       </div>
     </div>
   );

@@ -13,6 +13,8 @@ function requireOwner(request: NextRequest): string | null {
 // here too rather than relying on the client alone.
 const MAX_IMAGE_DATA_URL_BYTES = 1024 * 1024;
 
+const MAX_SUPPLY_CAP = 200;
+
 // Organizer-only view — includes each drop's secretCode, so it's scoped to
 // the signed-in wallet's own drops rather than listing every drop ever
 // created (which used to leak every organizer's claim codes to anyone).
@@ -55,40 +57,39 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  if (imageUrl !== undefined && typeof imageUrl !== "string") {
-    return NextResponse.json({ error: "imageUrl must be a string" }, { status: 400 });
+  if (typeof imageUrl !== "string" || !imageUrl.trim()) {
+    return NextResponse.json({ error: "imageUrl is required" }, { status: 400 });
   }
-  if (typeof imageUrl === "string" && imageUrl.length > MAX_IMAGE_DATA_URL_BYTES) {
+  if (imageUrl.length > MAX_IMAGE_DATA_URL_BYTES) {
     return NextResponse.json(
       { error: "Image is too large. Please choose a smaller picture." },
       { status: 400 }
     );
   }
-  if (description !== undefined && typeof description !== "string") {
-    return NextResponse.json({ error: "description must be a string" }, { status: 400 });
+  if (typeof description !== "string" || !description.trim()) {
+    return NextResponse.json({ error: "description is required" }, { status: 400 });
   }
-  if (location !== undefined && typeof location !== "string") {
-    return NextResponse.json({ error: "location must be a string" }, { status: 400 });
+  if (typeof location !== "string" || !location.trim()) {
+    return NextResponse.json({ error: "location is required" }, { status: 400 });
   }
 
-  let maxSupply: number | undefined;
-  if (maxSupplyRaw !== undefined && maxSupplyRaw !== null && maxSupplyRaw !== "") {
-    const parsed = Number(maxSupplyRaw);
-    if (!Number.isInteger(parsed) || parsed < 1) {
-      return NextResponse.json(
-        { error: "maxSupply must be a positive whole number" },
-        { status: 400 }
-      );
-    }
-    maxSupply = parsed;
+  if (maxSupplyRaw === undefined || maxSupplyRaw === null || maxSupplyRaw === "") {
+    return NextResponse.json({ error: "maxSupply is required" }, { status: 400 });
+  }
+  const maxSupply = Number(maxSupplyRaw);
+  if (!Number.isInteger(maxSupply) || maxSupply < 1 || maxSupply > MAX_SUPPLY_CAP) {
+    return NextResponse.json(
+      { error: `maxSupply must be a whole number between 1 and ${MAX_SUPPLY_CAP}` },
+      { status: 400 }
+    );
   }
 
   const record = await createEvent({
     title: title.trim(),
-    description: description ? String(description).trim() || undefined : undefined,
-    location: location ? String(location).trim() || undefined : undefined,
+    description: description.trim(),
+    location: location.trim(),
     eventEndTime,
-    imageUrl: imageUrl ? String(imageUrl).trim() || undefined : undefined,
+    imageUrl: imageUrl.trim(),
     maxSupply,
     ownerAddress: owner,
   });

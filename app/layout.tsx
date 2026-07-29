@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Iceberg } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import Link from "next/link";
 import "./globals.css";
 import { Footer } from "@/components/Footer";
-import { WalletButton } from "@/components/WalletButton";
+import { Header } from "@/components/Header";
 import { WalletProvider } from "@/components/WalletProvider";
 import { PrivyClientProvider } from "@/components/PrivyClientProvider";
 
@@ -42,30 +41,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-background">
         <PrivyClientProvider>
           <WalletProvider>
-            <header className="w-full border-b border-brand-mist/10 bg-brand-surface text-brand-mist">
-              <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 py-4 sm:flex-row sm:justify-between sm:px-6">
-                <Link href="/" className="font-heading text-lg uppercase tracking-wide">
-                  AcreLabs
-                </Link>
-                <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-6">
-                  <nav className="flex flex-wrap items-center justify-center gap-4 text-xs font-medium uppercase tracking-[0.2em]">
-                    <Link href="/claim" className="transition-opacity hover:opacity-60">
-                      Claim
-                    </Link>
-                    <Link href="/collection" className="transition-opacity hover:opacity-60">
-                      Collection
-                    </Link>
-                    <Link href="/explore" className="transition-opacity hover:opacity-60">
-                      Explore
-                    </Link>
-                    <Link href="/create" className="transition-opacity hover:opacity-60">
-                      Create Drop
-                    </Link>
-                  </nav>
-                  <WalletButton tone="light" />
-                </div>
-              </div>
-            </header>
+            <Header />
             <div className="flex flex-1 flex-col">{children}</div>
             <Footer />
           </WalletProvider>

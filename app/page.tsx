@@ -17,41 +17,44 @@ const stats = [
 export default function Home() {
   return (
     <>
-      <section className="brand-gradient relative flex flex-col items-center overflow-hidden px-6 pt-28 pb-24 text-center">
+      <section className="brand-gradient relative flex flex-col items-center overflow-hidden px-4 pt-16 pb-14 text-center">
         <span className="brand-kicker text-brand-mist/80">[ 01 ] Avalanche · Proof of Attendance</span>
 
-        <h1 className="mt-6 max-w-4xl font-heading text-6xl uppercase leading-[0.88] tracking-tight text-brand-mist sm:text-8xl">
+        <h1 className="mt-4 max-w-4xl font-heading text-6xl uppercase leading-[0.88] tracking-tight text-brand-mist sm:text-8xl">
           Claim Your
           <br />
           Event NFT
         </h1>
 
-        <p className="mt-6 font-serif text-lg italic text-brand-mist/90">
+        <p className="mt-4 font-serif text-lg italic text-brand-mist/90">
           Finalized on Avalanche in seconds.
         </p>
 
-        <div className="mt-10 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
-          <Link href="/claim" className="pill-dark h-12 w-full px-8 text-sm font-medium sm:w-auto">
+        <div className="mt-8 flex w-full flex-row gap-3 sm:w-auto">
+          <Link
+            href="/claim"
+            className="pill-dark h-11 flex-1 px-4 text-xs font-medium sm:h-12 sm:flex-none sm:px-8 sm:text-sm"
+          >
             Claim a Drop
           </Link>
           <Link
-            href="/collection"
-            className="pill-light h-12 w-full px-8 text-sm font-medium sm:w-auto"
+            href="/profile"
+            className="pill-light h-11 flex-1 px-4 text-xs font-medium sm:h-12 sm:flex-none sm:px-8 sm:text-sm"
           >
             My Collection
           </Link>
         </div>
       </section>
 
-      <section className="px-6 py-20 sm:py-28">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
+      <section className="px-6 py-14 sm:py-16">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
           <span className="brand-kicker text-brand-red">[ 02 ] How It Works</span>
 
           <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl bg-brand-mist/10 sm:grid-cols-3">
             {steps.map((step) => (
               <div
                 key={step.index}
-                className="group relative flex flex-col justify-between gap-10 overflow-hidden bg-background p-8 sm:min-h-56"
+                className="group relative flex flex-col justify-between gap-6 overflow-hidden bg-background p-6 sm:min-h-44"
               >
                 <span className="pointer-events-none absolute -bottom-6 -right-2 font-heading text-[7rem] leading-none text-brand-mist/5 transition-colors group-hover:text-brand-red/10 sm:text-[8rem]">
                   {step.index}
@@ -69,15 +72,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-brand-red px-6 py-20 text-brand-mist sm:py-24">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-12">
+      <section className="bg-brand-red px-6 py-14 text-brand-mist sm:py-16">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
           <h2 className="max-w-lg font-heading text-4xl uppercase leading-[0.95] tracking-tight sm:text-5xl">
             No forms.
             <br />
             No middlemen.
           </h2>
 
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             {stats.map((stat) => (
               <div key={stat.label} className="border-t border-brand-mist/30 pt-4">
                 <span className="font-heading text-4xl uppercase tracking-tight sm:text-5xl">
@@ -92,8 +95,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-6 py-20 sm:py-28">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-8 sm:flex-row sm:items-center sm:justify-between">
+      <section className="px-6 py-14 sm:py-16">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3">
             <span className="brand-kicker text-brand-red">[ 03 ] Built For</span>
             <h2 className="font-heading text-3xl uppercase tracking-tight text-brand-mist sm:text-4xl">
