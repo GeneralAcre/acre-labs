@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Connection URL lives in prisma.config.ts (Migrate) and lib/prisma.ts (the
+// runtime driver adapter) — Prisma 7 no longer reads it from this block.
+datasource db {
+  provider = "postgresql"
+}
+
+enum ClaimStatus {
+  pending
+  confirmed
+}
+
+model Event {
+  id              String   @id @default(uuid())
+  // Public, human-readable identifier for the claim URL (e.g.
+  // "avalanche-summit-afterparty-482917") — the raw uuid `id` above stays
+  // the stable internal reference (Postgres FK, on-chain voucher/hasClaimed
+  // key), so this can be regenerated or reformatted later without touching
+  // anything that actually matters for claim logic.
+  slug            String   @unique
+  title           String
+  description     String?
+  contractAddress String
+  secretCode      String
+  location        String?
+  eventEndTime    DateTime
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  imageUrl        String?
+  maxSupply       Int?
+  // Denormalized so the maxSupply gate can be enforced with a single atomic
+  // conditional UPDATE (claimedCount = claimedCount + 1 WHERE claimedCount <
+  // maxSupply) instead of a separate COUNT query racing the reservation.
+  claimedCount    Int      @default(0)
+  ownerAddress    String
+
+  claims Claim[]
+
+  @@index([ownerAddress])
+}
+
+model Claim {
+  id            String      @id @default(uuid())
+  eventId       String
+  walletAddress String
+  status        ClaimStatus
+  txHash        String?
+  reservedAt    DateTime    @default(now())
+  claimedAt     DateTime?
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  // One live claim per wallet per event — enforced by the database, not just
+  // application logic, so it holds even across multiple server instances.
+  @@unique([eventId, walletAddress])
+  @@index([eventId])
+  @@index([walletAddress])
+  @@index([txHash])
+}

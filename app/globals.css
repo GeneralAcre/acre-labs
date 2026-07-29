@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+:root {
+  /* AcreLabs is a fixed dark brand experience — every component uses the
+     explicit brand-* tokens below rather than reacting to system theme. Without
+     this, browsers auto-light-theme native form controls (inputs, date pickers)
+     on a light-mode OS, which then clash with our explicitly dark surfaces. */
+  color-scheme: dark;
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --brand-red: #d80819;
+  --brand-mist: #ffffff;
+  --brand-ink: #1c1c1c;
+  --brand-surface: #141414;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-red: var(--brand-red);
+  --color-brand-mist: var(--brand-mist);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-surface: var(--brand-surface);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-iceberg);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.brand-gradient {
+  /* Red stays dominant well past the halfway point — content (headline,
+     buttons) needs to read clearly against it, so the fade to black only
+     happens in the final stretch instead of cutting to base by mid-section. */
+  background: linear-gradient(
+    180deg,
+    var(--brand-red) 0%,
+    var(--brand-red) 55%,
+    #4a0f10 75%,
+    var(--background) 92%,
+    var(--background) 100%
+  );
+}
+
+/* Stays dark corner-to-corner regardless of element size, unlike
+   .brand-gradient (tuned for a tall hero) — keeps the white badge initials
+   readable at every badge size instead of landing on its pale bottom edge. */
+.badge-gradient {
+  background: linear-gradient(135deg, var(--brand-red) 0%, #5c0710 100%);
+}
+
+.brand-kicker {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.pill-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--brand-ink);
+  color: var(--brand-mist);
+  transition: background-color 0.2s ease;
+}
+
+.pill-dark:hover {
+  background: #2a2a2a;
+}
+
+.pill-outline-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: var(--brand-mist);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.pill-outline-light:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Opaque, unlike .pill-outline-light — stays readable regardless of exactly
+   where it lands on .brand-gradient instead of depending on a translucent
+   border/text color matching whatever's behind it. */
+.pill-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--brand-mist);
+  color: var(--brand-ink);
+  border: 1px solid rgba(16, 16, 16, 0.08);
+  transition: background-color 0.2s ease;
+}
+
+.pill-light:hover {
+  background: #ececec;
+}
+
+.pill-outline-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(28, 28, 28, 0.4);
+  color: var(--brand-ink);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.pill-outline-dark:hover {
+  background: rgba(28, 28, 28, 0.08);
+}
