@@ -142,37 +142,39 @@ export default function ProfilePage({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="brand-gradient relative flex flex-col items-center px-6 pt-16 pb-14 text-center">
+      <div className="brand-gradient relative pt-16 pb-14">
         <Link
           href="/collection"
-          className="absolute left-6 top-6 inline-flex items-center gap-1 text-xs font-medium text-brand-mist/70 hover:text-brand-mist"
+          className="absolute left-4 top-6 inline-flex items-center gap-1 text-xs font-medium text-brand-mist/70 hover:text-brand-mist"
         >
           Back
         </Link>
 
-        <span className="brand-kicker text-brand-mist/80">
-          {isMe ? "Your Wallet" : "Collection"}
-        </span>
-        <h1 className="mt-4 font-heading text-4xl uppercase tracking-tight text-brand-mist">
-          {isMe ? "My Collection" : "Their Collection"}
-        </h1>
-        <p className="mt-2 font-mono text-xs text-brand-mist/70">{shortenAddress(routeAddress)}</p>
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-start px-4 text-left">
+          <span className="brand-kicker text-brand-mist/80">
+            {isMe ? "Your Wallet" : "Collection"}
+          </span>
+          <h1 className="mt-4 font-heading text-4xl uppercase tracking-tight text-brand-mist">
+            {isMe ? "My Collection" : "Their Collection"}
+          </h1>
+          <p className="mt-2 font-mono text-xs text-brand-mist/70">{shortenAddress(routeAddress)}</p>
 
-        {stage === "ready" && claims.length > 0 && (
-          <p className="mt-3 text-sm text-brand-mist/80">
-            {claims.length} badge{claims.length === 1 ? "" : "s"} collected
-            {earliestClaimedAt ? ` since ${formatDate(earliestClaimedAt)}` : ""}
-          </p>
-        )}
+          {stage === "ready" && claims.length > 0 && (
+            <p className="mt-3 text-sm text-brand-mist/80">
+              {claims.length} badge{claims.length === 1 ? "" : "s"} collected
+              {earliestClaimedAt ? ` since ${formatDate(earliestClaimedAt)}` : ""}
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
+      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-12">
         {stage === "loading" && (
           <p className="text-sm text-brand-mist/60">Loading collection…</p>
         )}
 
         {stage === "ready" && claims.length === 0 && (
-          <p className="text-center text-sm text-brand-mist/60">
+          <p className="text-sm text-brand-mist/60">
             {isMe ? "You haven't" : "This wallet hasn't"} claimed any drops yet.
           </p>
         )}

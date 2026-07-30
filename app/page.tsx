@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { HeroBackground } from "@/components/HeroBackground";
 
 const steps = [
   { index: "01", title: "Create", copy: "Set a code and a picture." },
@@ -18,30 +19,32 @@ const stats = [
 export default function Home() {
   return (
     <>
-      <section className="brand-gradient relative flex flex-col items-center overflow-hidden px-4 pt-16 pb-14 text-center">
-        <span className="brand-kicker text-brand-mist/80">[ 01 ] Avalanche · Proof of Attendance</span>
+      <section className="relative flex min-h-[70vh] flex-col items-center justify-center overflow-hidden px-4 py-20 text-center">
+        <HeroBackground />
 
-        <h1 className="mt-4 max-w-4xl font-heading text-6xl uppercase leading-[0.88] tracking-tight text-brand-mist sm:text-8xl">
-          ACRE Labs
-        </h1>
+        <div className="relative z-10 flex flex-col items-center">
+          <h1 className="mt-4 max-w-4xl font-heading text-6xl uppercase leading-[0.88] tracking-tight text-brand-mist sm:text-8xl">
+            Acre Labs
+          </h1>
 
-        <p className="mt-4 font-serif text-lg italic text-brand-mist/90">
-          Finalized on Avalanche in seconds.
-        </p>
+          <p className="mt-4 font-serif text-lg italic text-brand-mist/90">
+            Finalized on Avalanche in seconds.
+          </p>
 
-        <div className="mt-8 flex w-full flex-row gap-3 sm:w-auto">
-          <Link
-            href="/claim"
-            className="pill-dark h-11 flex-1 px-4 text-xs font-medium sm:h-12 sm:flex-none sm:px-8 sm:text-sm"
-          >
-            Claim a Drop
-          </Link>
-          <Link
-            href="/profile"
-            className="pill-light h-11 flex-1 px-4 text-xs font-medium sm:h-12 sm:flex-none sm:px-8 sm:text-sm"
-          >
-            My Collection
-          </Link>
+          <div className="mt-8 flex w-full flex-row gap-3 sm:w-auto">
+            <Link
+              href="/claim"
+              className="pill-dark h-11 flex-1 px-4 text-xs font-medium sm:h-12 sm:flex-none sm:px-8 sm:text-sm"
+            >
+              Claim a Drop
+            </Link>
+            <Link
+              href="/profile"
+              className="pill-light h-11 flex-1 px-4 text-xs font-medium sm:h-12 sm:flex-none sm:px-8 sm:text-sm"
+            >
+              My Collection
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -71,8 +74,6 @@ export default function Home() {
 
       <section className="px-6 py-14 sm:py-16">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-          <span className="brand-kicker text-brand-red">[ 02 ] How It Works</span>
-
           <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl bg-brand-mist/10 sm:grid-cols-3">
             {steps.map((step) => (
               <div
@@ -121,7 +122,6 @@ export default function Home() {
       <section className="px-6 py-14 sm:py-16">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3">
-            <span className="brand-kicker text-brand-red">[ 03 ] Built For</span>
             <h2 className="font-heading text-3xl uppercase tracking-tight text-brand-mist sm:text-4xl">
               Anyone Proving
               <br />

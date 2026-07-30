@@ -5,7 +5,7 @@ export function Footer() {
 
   return (
     <footer className="w-full border-t border-brand-mist/10 bg-brand-ink text-brand-mist">
-      <div className="mx-auto w-full max-w-5xl px-6 py-8">
+      <div className="mx-auto w-full max-w-5xl px-4 py-8">
         <div className="mb-6 flex flex-col gap-1">
           <span className="font-heading text-base uppercase tracking-wide">AcreLabs</span>
           <p className="max-w-xs text-xs text-brand-mist/60">
@@ -71,7 +71,7 @@ export function Footer() {
       </div>
 
       <div className="border-t border-brand-mist/10">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 px-6 py-4 text-xs text-brand-mist/60 sm:flex-row sm:justify-between">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 px-4 py-4 text-xs text-brand-mist/60 sm:flex-row sm:justify-between">
           <span>© {year} AcreLabs. All rights reserved.</span>
           <span>Built on Avalanche.</span>
         </div>

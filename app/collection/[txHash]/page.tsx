@@ -95,7 +95,7 @@ export default function ClaimDetailPage({
           it via negative margin, so it never has to carry readable text. */}
       <div className="brand-gradient h-40 sm:h-48" />
 
-      <div className="mx-auto -mt-28 w-full max-w-5xl flex-1 px-6 pb-16 sm:-mt-32">
+      <div className="mx-auto -mt-28 w-full max-w-5xl flex-1 px-4 pb-16 sm:-mt-32">
         <Link
           href={backHref}
           className="pill-light mb-6 inline-flex h-9 items-center gap-1.5 px-4 text-xs font-medium"

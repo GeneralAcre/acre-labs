@@ -9,7 +9,7 @@ export default function TermsPage() {
       <h1 className="mt-3 font-heading text-3xl uppercase tracking-tight text-brand-mist">
         Terms of Use
       </h1>
-      <p className="mt-2 text-xs text-brand-mist/50">Last updated: 2026-07-26</p>
+      <p className="mt-2 text-xs text-brand-mist/50">Last updated: 2026-07-31</p>
 
       <div className="mt-8 flex flex-col gap-6 text-sm leading-relaxed text-brand-mist/80">
         <p>
@@ -28,7 +28,29 @@ export default function TermsPage() {
             code within that window can mint an NFT to their own connected
             wallet. AcreLabs never holds, custodies, or has access to your funds
             or private keys — every transaction is signed and broadcast by your
-            own wallet.
+            own wallet, or, if you sign in with email, by the embedded wallet
+            described below.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="font-heading text-lg uppercase tracking-tight text-brand-mist">
+            Email Sign-In
+          </h2>
+          <p className="mt-2">
+            If you don&apos;t have a wallet, you can continue with email instead.
+            This creates a self-custodial embedded wallet for you through Privy,
+            a third-party wallet infrastructure provider — see their{" "}
+            <a
+              href="https://www.privy.io/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-brand-mist"
+            >
+              privacy policy
+            </a>{" "}
+            for how they handle your email and key material. AcreLabs itself
+            never sees or stores your private key either way.
           </p>
         </section>
 

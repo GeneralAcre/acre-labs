@@ -31,18 +31,20 @@ export default function ClaimGalleryPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="brand-gradient flex flex-col items-center px-6 pt-20 pb-14 text-center">
-        <span className="brand-kicker text-brand-mist/80">Attendee Access</span>
-        <h1 className="mt-4 font-heading text-4xl uppercase tracking-tight text-brand-mist">
-          Claim Your Drop
-        </h1>
-        <p className="mt-3 max-w-md text-sm text-brand-mist/90">
-          Tap the drop you attended, then enter the 6-digit code shown at the
-          venue to claim your NFT on-chain.
-        </p>
+      <div className="brand-gradient pt-20 pb-14">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-start px-4 text-left">
+          <span className="brand-kicker text-brand-mist/80">Attendee Access</span>
+          <h1 className="mt-4 font-heading text-4xl uppercase tracking-tight text-brand-mist">
+            Claim Your Drop
+          </h1>
+          <p className="mt-3 max-w-md text-sm text-brand-mist/90">
+            Tap the drop you attended, then enter the 6-digit code shown at the
+            venue to claim your NFT on-chain.
+          </p>
+        </div>
       </div>
 
-      <div className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
+      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-12">
         {loading && <p className="text-sm text-brand-mist/60">Loading drops…</p>}
 
         {!loading && events.length === 0 && (
@@ -51,7 +53,7 @@ export default function ClaimGalleryPage() {
           </p>
         )}
 
-        <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6 lg:grid-cols-6">
           {events.map((event) => {
             const closed = now !== null && now > event.expiresAt;
             return (
@@ -61,12 +63,12 @@ export default function ClaimGalleryPage() {
                 title={event.title}
                 className="group flex flex-col items-center gap-2"
               >
-                <div className="relative">
+                <div className="relative aspect-square w-28 md:w-32">
                   <EventBadge
                     title={event.title}
                     imageUrl={event.imageUrl}
-                    size={96}
-                    className={`transition-transform group-hover:-translate-y-0.5 group-hover:shadow-md ${
+                    size={160}
+                    className={`!h-full !w-full transition-transform group-hover:-translate-y-0.5 group-hover:shadow-md ${
                       closed ? "opacity-50" : ""
                     }`}
                   />

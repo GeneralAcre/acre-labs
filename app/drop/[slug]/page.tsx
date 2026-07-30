@@ -94,7 +94,7 @@ export default function DropDetailPage({
           it via negative margin, same pattern as the claim-receipt page. */}
       <div className="brand-gradient h-40 sm:h-48" />
 
-      <div className="mx-auto -mt-28 w-full max-w-5xl flex-1 px-6 pb-16 sm:-mt-32">
+      <div className="mx-auto -mt-28 w-full max-w-5xl flex-1 px-4 pb-16 sm:-mt-32">
         <Link
           href="/collection"
           className="pill-light mb-6 inline-flex h-9 items-center gap-1.5 px-4 text-xs font-medium"
@@ -103,7 +103,7 @@ export default function DropDetailPage({
         </Link>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[320px_1fr]">
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-brand-mist/10 bg-brand-surface p-8 text-center shadow-sm">
+          <div className="flex flex-col items-center gap-4 text-center">
             <EventBadge title={event.title} imageUrl={event.imageUrl} size={220} />
             <span
               className={`pill-outline-light inline-flex h-9 items-center px-4 text-xs font-medium ${

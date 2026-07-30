@@ -33,8 +33,8 @@ export function Header() {
   }, [menuOpen]);
 
   return (
-    <header className="relative z-50 w-full border-b border-brand-mist/10 bg-brand-surface text-brand-mist">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+    <header className="relative z-20 w-full border-b border-brand-mist/10 bg-brand-surface text-brand-mist">
+      <div className="mx-auto flex w-full items-center justify-between px-6 py-4 sm:px-10">
         <Link href="/" className="flex shrink-0 items-center">
           <Image
             src="/project-logo/AcreLabs.png"
@@ -54,7 +54,7 @@ export function Header() {
               </Link>
             ))}
           </nav>
-          <WalletButton tone="light" showSwitchLink />
+          <WalletButton tone="light" />
         </div>
 
         <button
@@ -107,7 +107,6 @@ export function Header() {
               tone="light"
               className="mt-8 w-full max-w-xs"
               size="lg"
-              showSwitchLink
             />
           </nav>
 

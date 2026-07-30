@@ -31,23 +31,16 @@ const CONNECTED_TONE_CLASSES = {
   light: "pill-outline-light",
 } as const;
 
-const SWITCH_LINK_TONE_CLASSES = {
-  dark: "text-brand-ink/50 hover:text-brand-ink",
-  light: "text-brand-mist/70 hover:text-brand-mist",
-} as const;
-
 export function WalletButton({
   className = "",
   size = "sm",
   tone = "dark",
   connectLabel = "Connect Wallet",
-  showSwitchLink = false,
 }: {
   className?: string;
   size?: keyof typeof SIZE_CLASSES;
   tone?: keyof typeof CONNECTED_TONE_CLASSES;
   connectLabel?: string;
-  showSwitchLink?: boolean;
 }) {
   const {
     address,
@@ -57,7 +50,6 @@ export function WalletButton({
     availableWallets,
     isChooserOpen,
     beginConnect,
-    openChooser,
     chooseWallet,
     connectWithEmail,
     closeChooser,
@@ -92,14 +84,6 @@ export function WalletButton({
           >
             {connecting ? "Connecting…" : connectLabel}
           </button>
-          {showSwitchLink && !connecting && (
-            <button
-              onClick={openChooser}
-              className={`text-[11px] underline-offset-2 hover:underline ${SWITCH_LINK_TONE_CLASSES[tone]}`}
-            >
-              Use a different wallet
-            </button>
-          )}
         </>
       )}
 

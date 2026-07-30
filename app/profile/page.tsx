@@ -27,7 +27,7 @@ export default function MyProfilePage() {
         Connect to see every event NFT you&apos;ve claimed on Avalanche.
       </p>
       <p className="text-sm text-brand-mist/60">
-        Connect your wallet using the button at the top of the page.
+        Connect your wallet
       </p>
     </div>
   );

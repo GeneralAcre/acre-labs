@@ -31,7 +31,6 @@ interface WalletContextValue {
   availableWallets: EIP6963ProviderDetail[];
   isChooserOpen: boolean;
   beginConnect: () => Promise<void>;
-  openChooser: () => Promise<void>;
   chooseWallet: (detail: EIP6963ProviderDetail) => Promise<void>;
   connectWithEmail: () => void;
   closeChooser: () => void;
@@ -104,15 +103,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setChooserOpen(true);
   }, [finishConnect]);
 
-  // Always shows the full picker, bypassing the Core auto-preference — for
-  // the "use a different wallet" escape hatch.
-  const openChooser = useCallback(async () => {
-    setError(null);
-    const found = await discoverProviders();
-    setAvailableWallets(found);
-    setChooserOpen(true);
-  }, []);
-
   const chooseWallet = useCallback(
     async (detail: EIP6963ProviderDetail) => {
       await finishConnect(detail);
@@ -139,6 +129,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const closeChooser = useCallback(() => setChooserOpen(false), []);
 
   const disconnect = useCallback(() => {
+    // Best-effort: revoke the site's account permission so the wallet shows
+    // the account-selection prompt again next time instead of silently
+    // reconnecting to the same address. Not every wallet supports this
+    // (EIP-2255), so a rejection/error here is expected and ignored.
+    provider?.request({
+      method: "wallet_revokePermissions",
+      params: [{ eth_accounts: {} }],
+    }).catch(() => {});
+
     setAddress(null);
     setProvider(null);
     setProviderName(null);
@@ -147,7 +146,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setIsPrivySession(false);
       privy.logout();
     }
-  }, [isPrivySession, privy]);
+  }, [provider, isPrivySession, privy]);
 
   // Silent reconnect: if the user previously picked an injected wallet and
   // it's still authorized, restore the session without prompting a popup.
@@ -254,7 +253,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       availableWallets,
       isChooserOpen,
       beginConnect,
-      openChooser,
       chooseWallet,
       connectWithEmail,
       closeChooser,
@@ -269,7 +267,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       availableWallets,
       isChooserOpen,
       beginConnect,
-      openChooser,
       chooseWallet,
       connectWithEmail,
       closeChooser,
