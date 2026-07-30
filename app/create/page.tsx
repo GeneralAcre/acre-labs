@@ -388,7 +388,9 @@ export default function CreateDropPage() {
                 onChange={(e) => setEventEndDate(e.target.value)}
                 className="rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 text-sm text-brand-mist focus:border-brand-mist/40 focus:outline-none"
               />
-              <p className="text-xs text-brand-mist/40">Claim expires 2 hours after this date.</p>
+              <p className="text-xs text-brand-mist/40">
+                Claim stays open through the next day.
+              </p>
             </div>
 
             <div className="flex flex-col gap-2">

@@ -10,7 +10,10 @@ import type {
   PublicEventWithSupply,
 } from "./types";
 
-const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+// eventEndTime is already end-of-day (23:59:59.999) for the selected date —
+// adding a full day lands the deadline at end-of-day on the *next* calendar
+// date, so an event ending today stays claimable through all of tomorrow.
+const CLAIM_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 // A pending reservation is abandoned (and its slot freed) if it's never
 // confirmed within this window — covers a wallet that rejected the tx or a
@@ -91,7 +94,7 @@ export async function createEvent(input: CreateEventInput): Promise<EventRecord>
           contractAddress: SHARED_DROP_CONTRACT_ADDRESS,
           secretCode: generateSecretCode(),
           eventEndTime: new Date(input.eventEndTime),
-          expiresAt: new Date(input.eventEndTime + TWO_HOURS_MS),
+          expiresAt: new Date(input.eventEndTime + CLAIM_WINDOW_MS),
           imageUrl: input.imageUrl,
           maxSupply: input.maxSupply,
           ownerAddress: input.ownerAddress.toLowerCase(),

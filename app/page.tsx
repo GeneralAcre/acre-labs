@@ -10,7 +10,7 @@ const audiences = ["Organizers", "Attendees", "Communities & DAOs"];
 
 const stats = [
   { value: "6-digit", label: "Claim code" },
-  { value: "2 hr", label: "Window after the event ends" },
+  { value: "24 hr", label: "Window after the event ends" },
   { value: "1 / wallet", label: "No duplicate claims" },
 ];
 

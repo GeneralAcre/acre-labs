@@ -167,8 +167,8 @@ export default function ClaimEventPage({
             </h1>
             <p className="text-sm text-brand-mist/90">
               {event?.title ? `The claim window for "${event.title}" ` : "The claim window "}
-              ended 2 hours after the event finished. Contact the organizer if you believe
-              this is a mistake.
+              closed at the end of the day after the event finished. Contact the organizer
+              if you believe this is a mistake.
             </p>
           </>
         )}
