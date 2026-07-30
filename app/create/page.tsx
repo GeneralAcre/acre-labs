@@ -41,22 +41,29 @@ const BADGE_SOURCE_MAX_BYTES = 20 * 1024 * 1024; // guards against hanging on a 
 // be slow enough to fetch/render that some wallets time out and show the
 // badge as blank. Resizing + re-encoding client-side keeps the payload small
 // regardless of what the organizer uploads.
+//
+// The badge is always displayed in a circular 1:1 frame (see EventBadge),
+// so a non-square upload previously got center-cropped unpredictably by
+// CSS object-fit at render time — often cutting off text or faces near the
+// edges. Cropping to a square here instead means what's stored is exactly
+// what the organizer will see in every preview and claim page.
 async function compressBadgeImage(file: File): Promise<string> {
   if (file.size > BADGE_SOURCE_MAX_BYTES) {
     throw new Error("Image is too large. Please choose a file under 20MB.");
   }
 
   const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, BADGE_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
-  const width = Math.round(bitmap.width * scale);
-  const height = Math.round(bitmap.height * scale);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const sx = (bitmap.width - side) / 2;
+  const sy = (bitmap.height - side) / 2;
+  const size = Math.min(side, BADGE_MAX_DIMENSION);
 
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = size;
+  canvas.height = size;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Image compression isn't supported in this browser.");
-  ctx.drawImage(bitmap, 0, 0, width, height);
+  ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, size, size);
   bitmap.close();
 
   return canvas.toDataURL("image/jpeg", BADGE_JPEG_QUALITY);
