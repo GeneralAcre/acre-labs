@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "r
 import Link from "next/link";
 import type { EventRecord } from "@/lib/types";
 import { EventBadge } from "@/components/EventBadge";
-import { WalletButton } from "@/components/WalletButton";
 import { useWallet } from "@/components/WalletProvider";
 import { signMessage } from "@/lib/web3/wallet";
 import { signInMessage } from "@/lib/authMessage";
@@ -327,7 +326,9 @@ export default function CreateDropPage() {
           Connect Your Wallet
         </h1>
         <p className="text-sm text-brand-mist/60">Manage the drops you create.</p>
-        <WalletButton tone="light" size="lg" className="mt-2" />
+        <p className="text-sm text-brand-mist/60">
+          Connect your wallet using the button at the top of the page.
+        </p>
       </div>
     );
   }

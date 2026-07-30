@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const steps = [
@@ -21,9 +22,7 @@ export default function Home() {
         <span className="brand-kicker text-brand-mist/80">[ 01 ] Avalanche · Proof of Attendance</span>
 
         <h1 className="mt-4 max-w-4xl font-heading text-6xl uppercase leading-[0.88] tracking-tight text-brand-mist sm:text-8xl">
-          Claim Your
-          <br />
-          Event NFT
+          ACRE Labs
         </h1>
 
         <p className="mt-4 font-serif text-lg italic text-brand-mist/90">
@@ -43,6 +42,30 @@ export default function Home() {
           >
             My Collection
           </Link>
+        </div>
+      </section>
+
+      <section className="border-t border-brand-mist/10 bg-background px-6 py-10">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 text-center">
+          <span className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/40">
+            Built for
+          </span>
+          <div className="flex flex-wrap items-center justify-center gap-10 sm:gap-16">
+            <Image
+              src="/trustby/Team1.png"
+              alt="Team1"
+              width={2054}
+              height={578}
+              className="h-7 w-auto opacity-80 sm:h-8"
+            />
+            <Image
+              src="/trustby/AvalancheLogo.png"
+              alt="Avalanche"
+              width={1835}
+              height={271}
+              className="h-6 w-auto opacity-80 sm:h-7"
+            />
+          </div>
         </div>
       </section>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { WalletButton } from "./WalletButton";
 
@@ -34,8 +35,15 @@ export function Header() {
   return (
     <header className="relative z-50 w-full border-b border-brand-mist/10 bg-brand-surface text-brand-mist">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="font-heading text-lg uppercase tracking-wide">
-          AcreLabs
+        <Link href="/" className="flex shrink-0 items-center">
+          <Image
+            src="/project-logo/AcreLabs.png"
+            alt="AcreLabs"
+            width={43}
+            height={79}
+            priority
+            className="h-8 w-auto sm:h-9"
+          />
         </Link>
 
         <div className="hidden items-center gap-6 sm:flex">
@@ -46,7 +54,7 @@ export function Header() {
               </Link>
             ))}
           </nav>
-          <WalletButton tone="light" />
+          <WalletButton tone="light" showSwitchLink />
         </div>
 
         <button
@@ -65,9 +73,15 @@ export function Header() {
             <Link
               href="/"
               onClick={() => setMenuOpen(false)}
-              className="font-heading text-lg uppercase tracking-wide"
+              className="flex shrink-0 items-center"
             >
-              AcreLabs
+              <Image
+                src="/project-logo/AcreLabs.png"
+                alt="AcreLabs"
+                width={43}
+                height={79}
+                className="h-8 w-auto"
+              />
             </Link>
             <button
               onClick={() => setMenuOpen(false)}
@@ -89,7 +103,12 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-            <WalletButton tone="light" className="mt-8 w-full max-w-xs" size="lg" />
+            <WalletButton
+              tone="light"
+              className="mt-8 w-full max-w-xs"
+              size="lg"
+              showSwitchLink
+            />
           </nav>
 
           <div className="select-none overflow-hidden py-2">

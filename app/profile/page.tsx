@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { WalletButton } from "@/components/WalletButton";
 import { useWallet } from "@/components/WalletProvider";
 
 // The connected wallet's own collection lives at /profile/[address] — the
@@ -27,7 +26,9 @@ export default function MyProfilePage() {
       <p className="text-sm text-brand-mist/60">
         Connect to see every event NFT you&apos;ve claimed on Avalanche.
       </p>
-      <WalletButton tone="light" size="lg" className="mt-2" />
+      <p className="text-sm text-brand-mist/60">
+        Connect your wallet using the button at the top of the page.
+      </p>
     </div>
   );
 }
