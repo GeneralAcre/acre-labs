@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ACTIVE_CHAIN } from "@/lib/web3/chains";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -58,7 +59,7 @@ export function Footer() {
                 Avalanche
               </a>
               <a
-                href="https://testnet.snowtrace.io/"
+                href={ACTIVE_CHAIN.explorerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-brand-mist/80 hover:text-brand-mist"
