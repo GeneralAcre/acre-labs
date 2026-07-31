@@ -14,6 +14,47 @@ const CLAIM_ABI = [
 
 export { Web3ClaimError };
 
+interface EthersLikeError {
+  code?: string;
+  reason?: string | null;
+  shortMessage?: string;
+}
+
+function isEthersLikeError(err: unknown): err is EthersLikeError {
+  return typeof err === "object" && err !== null && "code" in err;
+}
+
+// Wallets/ethers surface raw, dev-facing error blobs (full calldata, nested
+// JSON-RPC payloads) — translates the common ones into something a claimer
+// can actually act on instead of a wall of hex.
+function friendlyMessage(err: unknown): string {
+  if (isEthersLikeError(err)) {
+    switch (err.code) {
+      case "INSUFFICIENT_FUNDS":
+        return "Your wallet doesn't have enough AVAX to cover the gas fee. Add a small amount of AVAX and try again.";
+      case "ACTION_REJECTED":
+        return "Transaction canceled in your wallet.";
+      case "CALL_EXCEPTION": {
+        const reason = err.reason ?? "";
+        if (reason.includes("already claimed")) {
+          return "This wallet has already claimed this drop.";
+        }
+        if (reason.includes("invalid voucher") || reason.includes("voucher expired")) {
+          return "This claim link has expired. Refresh the page and try again.";
+        }
+        if (reason.includes("claiming paused")) {
+          return "Claiming is currently paused by the organizer. Try again later.";
+        }
+        return "The transaction was rejected by the contract. Please try again.";
+      }
+      case "NETWORK_ERROR":
+      case "TIMEOUT":
+        return "Network error reaching the blockchain. Check your connection and try again.";
+    }
+  }
+  return err instanceof Error ? err.message : "The claim transaction failed.";
+}
+
 export interface ClaimVoucher {
   eventId: string;
   deadline: number;
@@ -61,8 +102,6 @@ export async function claimNftOnChain(
     return { txHash, walletAddress, tokenId };
   } catch (err) {
     if (err instanceof Web3ClaimError) throw err;
-    const message =
-      err instanceof Error ? err.message : "The claim transaction failed.";
-    throw new Web3ClaimError(message);
+    throw new Web3ClaimError(friendlyMessage(err));
   }
 }
