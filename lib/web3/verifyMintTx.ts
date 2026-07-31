@@ -10,19 +10,21 @@ export type VerifyMintResult =
 // successful mint from the drop's contract to the claiming wallet — POST
 // /api/claims used to just trust whatever the client sent, which let anyone
 // fabricate a well-formed hash and get a "claim" recorded for free.
+async function getReceipt(txHash: string) {
+  const provider = new JsonRpcProvider(ACTIVE_CHAIN.rpcUrl);
+  try {
+    return await provider.getTransactionReceipt(txHash);
+  } catch {
+    return null;
+  }
+}
+
 export async function verifyMintTransaction(params: {
   txHash: string;
   contractAddress: string;
   walletAddress: string;
 }): Promise<VerifyMintResult> {
-  const provider = new JsonRpcProvider(ACTIVE_CHAIN.rpcUrl);
-
-  let receipt;
-  try {
-    receipt = await provider.getTransactionReceipt(params.txHash);
-  } catch {
-    return { ok: false, reason: "Unable to reach the chain to verify this transaction." };
-  }
+  const receipt = await getReceipt(params.txHash);
 
   if (!receipt) {
     return { ok: false, reason: "Transaction not found on-chain." };
@@ -40,4 +42,18 @@ export async function verifyMintTransaction(params: {
   }
 
   return { ok: true, tokenId };
+}
+
+// Re-derives a token ID for a claim that's already confirmed but is missing
+// one — e.g. the RPC lookup at confirm time briefly failed, or the row
+// predates tokenId being captured at all. Read-only, best-effort: returns
+// null on any failure so callers can just skip the backfill for that view.
+export async function resolveTokenId(params: {
+  txHash: string;
+  contractAddress: string;
+  walletAddress: string;
+}): Promise<string | null> {
+  const receipt = await getReceipt(params.txHash);
+  if (!receipt || receipt.status !== 1) return null;
+  return findMintedTokenId(receipt.logs, params.contractAddress, params.walletAddress);
 }

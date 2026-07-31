@@ -2,6 +2,7 @@ import { Prisma, type Event as PrismaEvent, type Claim as PrismaClaim } from "@p
 import { prisma } from "./prisma";
 import { generateSecretCode, normalizeCode } from "./code";
 import { SHARED_DROP_CONTRACT_ADDRESS } from "./web3/chains";
+import { resolveTokenId } from "./web3/verifyMintTx";
 import type {
   ClaimRecord,
   CollectedClaim,
@@ -317,6 +318,31 @@ export async function confirmClaim(input: ConfirmClaimInput): Promise<ClaimRecor
   return updated ? toClaimRecord(updated) : null;
 }
 
+// A confirmed claim can end up missing a tokenId (the RPC lookup at confirm
+// time briefly failed, or the row predates tokenId being captured at all).
+// Re-derived lazily on read, same idea as the pending-reservation TTL sweep
+// in getClaimCount, so a stuck row self-heals the next time it's viewed
+// instead of needing a one-off script.
+async function backfillTokenId(row: {
+  id: string;
+  txHash: string | null;
+  tokenId: string | null;
+  walletAddress: string;
+  event: { contractAddress: string };
+}): Promise<string | null> {
+  if (row.tokenId || !row.txHash) return row.tokenId;
+
+  const tokenId = await resolveTokenId({
+    txHash: row.txHash,
+    contractAddress: row.event.contractAddress,
+    walletAddress: row.walletAddress,
+  });
+  if (!tokenId) return null;
+
+  await prisma.claim.update({ where: { id: row.id }, data: { tokenId } }).catch(() => {});
+  return tokenId;
+}
+
 export async function listClaimsByWallet(walletAddress: string): Promise<CollectedClaim[]> {
   const normalized = walletAddress.toLowerCase();
   const rows = await prisma.claim.findMany({
@@ -325,16 +351,18 @@ export async function listClaimsByWallet(walletAddress: string): Promise<Collect
     orderBy: { claimedAt: "desc" },
   });
 
-  return rows
-    .filter((row) => row.txHash !== null && row.claimedAt !== null)
-    .map((row) => ({
-      eventId: row.eventId,
-      walletAddress: row.walletAddress,
-      txHash: row.txHash as string,
-      tokenId: row.tokenId,
-      claimedAt: (row.claimedAt as Date).getTime(),
-      event: toPublicEvent(toEventRecord(row.event)),
-    }));
+  return Promise.all(
+    rows
+      .filter((row) => row.txHash !== null && row.claimedAt !== null)
+      .map(async (row) => ({
+        eventId: row.eventId,
+        walletAddress: row.walletAddress,
+        txHash: row.txHash as string,
+        tokenId: await backfillTokenId(row),
+        claimedAt: (row.claimedAt as Date).getTime(),
+        event: toPublicEvent(toEventRecord(row.event)),
+      }))
+  );
 }
 
 export interface CollectorSummary {
@@ -380,7 +408,7 @@ export async function getClaimByTxHash(txHash: string): Promise<CollectedClaim |
     eventId: row.eventId,
     walletAddress: row.walletAddress,
     txHash: row.txHash,
-    tokenId: row.tokenId,
+    tokenId: await backfillTokenId(row),
     claimedAt: row.claimedAt.getTime(),
     event: toPublicEvent(toEventRecord(row.event)),
   };
