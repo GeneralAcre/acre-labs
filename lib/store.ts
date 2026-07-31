@@ -45,6 +45,7 @@ function toClaimRecord(row: PrismaClaim): ClaimRecord {
     walletAddress: row.walletAddress,
     status: row.status,
     txHash: row.txHash,
+    tokenId: row.tokenId,
     reservedAt: row.reservedAt.getTime(),
     claimedAt: row.claimedAt ? row.claimedAt.getTime() : null,
   };
@@ -288,6 +289,7 @@ export interface ConfirmClaimInput {
   eventId: string;
   walletAddress: string;
   txHash: string;
+  tokenId: string | null;
 }
 
 // Upgrades an existing pending reservation to confirmed — never creates a
@@ -300,7 +302,12 @@ export async function confirmClaim(input: ConfirmClaimInput): Promise<ClaimRecor
 
   const { count } = await prisma.claim.updateMany({
     where: { eventId: input.eventId, walletAddress: normalizedWallet, status: "pending" },
-    data: { status: "confirmed", txHash: input.txHash, claimedAt: new Date() },
+    data: {
+      status: "confirmed",
+      txHash: input.txHash,
+      tokenId: input.tokenId,
+      claimedAt: new Date(),
+    },
   });
   if (count === 0) return null;
 
@@ -324,6 +331,7 @@ export async function listClaimsByWallet(walletAddress: string): Promise<Collect
       eventId: row.eventId,
       walletAddress: row.walletAddress,
       txHash: row.txHash as string,
+      tokenId: row.tokenId,
       claimedAt: (row.claimedAt as Date).getTime(),
       event: toPublicEvent(toEventRecord(row.event)),
     }));
@@ -372,6 +380,7 @@ export async function getClaimByTxHash(txHash: string): Promise<CollectedClaim |
     eventId: row.eventId,
     walletAddress: row.walletAddress,
     txHash: row.txHash,
+    tokenId: row.tokenId,
     claimedAt: row.claimedAt.getTime(),
     event: toPublicEvent(toEventRecord(row.event)),
   };

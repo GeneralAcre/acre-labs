@@ -33,6 +33,7 @@ export interface ClaimRecord {
   walletAddress: string;
   status: "pending" | "confirmed";
   txHash: string | null;
+  tokenId: string | null;
   reservedAt: number;
   claimedAt: number | null;
 }
@@ -41,6 +42,7 @@ export interface CollectedClaim {
   eventId: string;
   walletAddress: string;
   txHash: string;
+  tokenId: string | null;
   claimedAt: number;
   event: PublicEvent;
 }

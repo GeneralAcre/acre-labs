@@ -56,7 +56,12 @@ export async function POST(request: NextRequest) {
 
   // Only upgrades a reservation created by /api/claim's code check — a bare
   // POST here with no prior validated claim is rejected.
-  const claim = await confirmClaim({ eventId, walletAddress, txHash });
+  const claim = await confirmClaim({
+    eventId,
+    walletAddress,
+    txHash,
+    tokenId: verification.tokenId,
+  });
   if (!claim) {
     return NextResponse.json(
       { error: "No reserved claim found to confirm for this wallet and event." },

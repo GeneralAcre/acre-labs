@@ -6,6 +6,7 @@ import type { CollectedClaim } from "@/lib/types";
 import { EventBadge } from "@/components/EventBadge";
 import { useWallet } from "@/components/WalletProvider";
 import { ACTIVE_CHAIN, txExplorerUrl } from "@/lib/web3/chains";
+import { watchNftAsset } from "@/lib/web3/wallet";
 import { useNow } from "@/lib/useNow";
 
 function shortenAddress(address: string): string {
@@ -31,10 +32,25 @@ export default function ClaimDetailPage({
   params: Promise<{ txHash: string }>;
 }) {
   const { txHash } = use(params);
-  const { address: myAddress } = useWallet();
+  const { address: myAddress, provider } = useWallet();
   const [claim, setClaim] = useState<CollectedClaim | null>(null);
   const [stage, setStage] = useState<Stage>("loading");
+  const [copied, setCopied] = useState(false);
+  const [addToWalletState, setAddToWalletState] = useState<"idle" | "added" | "failed">("idle");
   const now = useNow();
+
+  async function copyContract(address: string) {
+    await navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function addToMetaMask(contractAddress: string, tokenId: string) {
+    if (!provider) return;
+    const added = await watchNftAsset(provider, { contractAddress, tokenId });
+    setAddToWalletState(added ? "added" : "failed");
+    setTimeout(() => setAddToWalletState("idle"), 2500);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -165,8 +181,29 @@ export default function ClaimDetailPage({
               </div>
               <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
                 <span className="text-xs text-brand-mist/50">Contract</span>
+                {isMine ? (
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <p className="break-all font-mono text-sm font-medium text-brand-mist">
+                      {claim.event.contractAddress}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => copyContract(claim.event.contractAddress)}
+                      className="shrink-0 text-xs font-medium text-brand-red hover:underline"
+                    >
+                      {copied ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-1 font-mono text-sm font-medium text-brand-mist">
+                    {shortenAddress(claim.event.contractAddress)}
+                  </p>
+                )}
+              </div>
+              <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
+                <span className="text-xs text-brand-mist/50">Token ID</span>
                 <p className="mt-1 font-mono text-sm font-medium text-brand-mist">
-                  {shortenAddress(claim.event.contractAddress)}
+                  {claim.tokenId ?? "—"}
                 </p>
               </div>
               <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm sm:col-span-2">
@@ -176,6 +213,20 @@ export default function ClaimDetailPage({
                 </p>
               </div>
             </div>
+
+            {isMine && claim.tokenId && provider && (
+              <button
+                type="button"
+                onClick={() => addToMetaMask(claim.event.contractAddress, claim.tokenId as string)}
+                className="pill-outline-light h-11 w-full self-start px-6 text-sm font-medium sm:w-auto"
+              >
+                {addToWalletState === "added"
+                  ? "Added to wallet"
+                  : addToWalletState === "failed"
+                  ? "Couldn't add — try manually"
+                  : "Add to MetaMask"}
+              </button>
+            )}
           </div>
         </div>
       </div>

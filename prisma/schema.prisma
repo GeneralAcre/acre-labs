@@ -48,6 +48,7 @@ model Claim {
   walletAddress String
   status        ClaimStatus
   txHash        String?
+  tokenId       String?
   reservedAt    DateTime    @default(now())
   claimedAt     DateTime?
 
