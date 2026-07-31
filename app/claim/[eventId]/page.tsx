@@ -136,6 +136,15 @@ export default function ClaimEventPage({
           : "The claim transaction failed. Please try again."
       );
       setStage("code_entry");
+
+      // The mint never went through (rejected, insufficient funds, RPC
+      // error) — free the reservation now instead of leaving it pending for
+      // the full TTL so the wallet can retry right away.
+      fetch("/api/claim", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: event.id, walletAddress: address }),
+      }).catch(() => {});
     }
   }
 

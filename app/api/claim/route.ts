@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { toPublicEvent, validateAndReserveClaim } from "@/lib/store";
+import { releasePendingClaim, toPublicEvent, validateAndReserveClaim } from "@/lib/store";
 import { signClaimVoucher } from "@/lib/web3/voucher";
 
 export async function POST(request: NextRequest) {
@@ -41,4 +41,23 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({ ok: true, event: toPublicEvent(result.event), voucher });
+}
+
+// Called right after a claim reservation's on-chain mint fails client-side
+// (wallet rejected it, insufficient funds, RPC error) so the slot frees up
+// immediately instead of sitting pending for the full reservation TTL.
+export async function DELETE(request: NextRequest) {
+  const body = await request.json().catch(() => null);
+  const eventId = body?.eventId;
+  const walletAddress = body?.walletAddress;
+
+  if (typeof eventId !== "string") {
+    return NextResponse.json({ ok: false, reason: "invalid_request" }, { status: 400 });
+  }
+  if (typeof walletAddress !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+    return NextResponse.json({ ok: false, reason: "invalid_request" }, { status: 400 });
+  }
+
+  const released = await releasePendingClaim(eventId, walletAddress);
+  return NextResponse.json({ ok: released });
 }

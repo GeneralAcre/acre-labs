@@ -260,6 +260,30 @@ export async function validateAndReserveClaim(
   });
 }
 
+// Frees a pending reservation immediately — called when the on-chain claim
+// fails client-side (insufficient funds, rejected in wallet, RPC error)
+// before a tx ever broadcasts, so the wallet can retry right away instead of
+// waiting out RESERVATION_TTL_MINUTES. Never touches a confirmed claim.
+export async function releasePendingClaim(
+  eventId: string,
+  walletAddress: string
+): Promise<boolean> {
+  const normalizedWallet = walletAddress.toLowerCase();
+
+  return prisma.$transaction(async (tx) => {
+    const { count } = await tx.claim.deleteMany({
+      where: { eventId, walletAddress: normalizedWallet, status: "pending" },
+    });
+    if (count === 0) return false;
+
+    await tx.event.update({
+      where: { id: eventId },
+      data: { claimedCount: { decrement: count } },
+    });
+    return true;
+  });
+}
+
 export interface ConfirmClaimInput {
   eventId: string;
   walletAddress: string;
