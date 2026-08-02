@@ -134,6 +134,27 @@ export async function getEvent(id: string): Promise<EventRecord | undefined> {
   return row ? toEventRecord(row) : undefined;
 }
 
+// Scoped to the owner (like listEventsByOwner) so one organizer can't extend
+// another's drop. Only touches expiresAt (the claim deadline) — eventEndTime
+// records when the event itself actually happened and shouldn't move just
+// because the claim window is being extended after the fact.
+export async function updateEvent(
+  id: string,
+  ownerAddress: string,
+  input: { expiresAt: number }
+): Promise<EventRecord | null> {
+  const { count } = await prisma.event.updateMany({
+    where: { id, ownerAddress: ownerAddress.toLowerCase() },
+    data: {
+      expiresAt: new Date(input.expiresAt),
+    },
+  });
+  if (count === 0) return null;
+
+  const updated = await prisma.event.findUnique({ where: { id } });
+  return updated ? toEventRecord(updated) : null;
+}
+
 // Public claim links use the slug, not the raw id — everything downstream
 // (validateAndReserveClaim, the voucher digest, on-chain hasClaimed) still
 // keys off the resolved `id`, so the slug never has to be plumbed any

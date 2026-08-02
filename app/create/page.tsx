@@ -153,6 +153,9 @@ export default function CreateDropPage() {
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
+  const [extendDrafts, setExtendDrafts] = useState<Record<string, string>>({});
+  const [extendingId, setExtendingId] = useState<string | null>(null);
+  const [extendError, setExtendError] = useState<string | null>(null);
   const origin = useOrigin();
   const now = useNow();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -303,6 +306,38 @@ export default function CreateDropPage() {
       await loadEvents();
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleExtend(eventId: string) {
+    const draft = extendDrafts[eventId];
+    const expiresAt = endOfDayTimestamp(draft ?? "");
+    if (expiresAt === null) {
+      setExtendError("Enter the new claim deadline as YYYY-MM-DD.");
+      return;
+    }
+
+    setExtendError(null);
+    setExtendingId(eventId);
+    try {
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expiresAt }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setExtendError(data?.error ?? "Failed to extend the deadline.");
+        return;
+      }
+      setExtendDrafts((current) => {
+        const next = { ...current };
+        delete next[eventId];
+        return next;
+      });
+      await loadEvents();
+    } finally {
+      setExtendingId(null);
     }
   }
 
@@ -551,24 +586,65 @@ export default function CreateDropPage() {
                   Claimed {event.claimedCount}
                   {typeof event.maxSupply === "number" ? ` / ${event.maxSupply}` : " · unlimited"}
                 </p>
+
+                <p className="text-[11px] text-brand-mist/40">
+                  Claim closes {formatDate(event.expiresAt)}
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={extendDrafts[event.id] ?? ""}
+                    onChange={(e) =>
+                      setExtendDrafts((current) => ({ ...current, [event.id]: e.target.value }))
+                    }
+                    className="flex-1 rounded-md border border-brand-mist/15 bg-brand-surface px-2 py-1.5 text-[11px] text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+                  />
+                  <button
+                    onClick={() => handleExtend(event.id)}
+                    disabled={extendingId === event.id}
+                    className="whitespace-nowrap rounded-md border border-brand-mist/15 px-2 py-1.5 text-[11px] font-medium text-brand-mist hover:bg-brand-ink disabled:opacity-50"
+                  >
+                    {extendingId === event.id ? "Extending…" : "Extend"}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
+
+          {extendError && <p className="text-sm text-brand-red">{extendError}</p>}
 
           {historyEvents.length > 0 && (
             <div className="flex flex-col gap-1 border-t border-brand-mist/10 pt-6">
               <span className="brand-kicker mb-2 text-brand-mist/40">History</span>
               {historyEvents.map((event) => (
-                <Link
+                <div
                   key={event.id}
-                  href={`/drop/${event.slug}`}
-                  className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 text-xs text-brand-mist/50 hover:bg-brand-ink hover:text-brand-mist"
+                  className="flex flex-col gap-2 rounded-lg px-2 py-2 text-xs text-brand-mist/50 hover:bg-brand-ink hover:text-brand-mist"
                 >
-                  <span className="truncate">{event.title}</span>
-                  <span className="whitespace-nowrap text-brand-mist/30">
-                    Closed {formatDate(event.expiresAt)}
-                  </span>
-                </Link>
+                  <Link href={`/drop/${event.slug}`} className="flex items-center justify-between gap-2">
+                    <span className="truncate">{event.title}</span>
+                    <span className="whitespace-nowrap text-brand-mist/30">
+                      Closed {formatDate(event.expiresAt)}
+                    </span>
+                  </Link>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={extendDrafts[event.id] ?? ""}
+                      onChange={(e) =>
+                        setExtendDrafts((current) => ({ ...current, [event.id]: e.target.value }))
+                      }
+                      className="flex-1 rounded-md border border-brand-mist/15 bg-brand-surface px-2 py-1.5 text-[11px] text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+                    />
+                    <button
+                      onClick={() => handleExtend(event.id)}
+                      disabled={extendingId === event.id}
+                      className="whitespace-nowrap rounded-md border border-brand-mist/15 px-2 py-1.5 text-[11px] font-medium text-brand-mist hover:bg-brand-ink disabled:opacity-50"
+                    >
+                      {extendingId === event.id ? "Extending…" : "Extend"}
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
