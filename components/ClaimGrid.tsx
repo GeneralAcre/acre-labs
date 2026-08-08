@@ -4,7 +4,7 @@ import { EventBadge } from "@/components/EventBadge";
 
 export function ClaimGrid({ claims }: { claims: CollectedClaim[] }) {
   return (
-    <div className="flex flex-wrap justify-center gap-5">
+    <div className="grid grid-cols-2 justify-items-start gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
       {claims.map((claim) => (
         <Link
           key={`${claim.eventId}:${claim.txHash}`}
@@ -12,13 +12,13 @@ export function ClaimGrid({ claims }: { claims: CollectedClaim[] }) {
           title={claim.event.title}
           className="group flex flex-col items-center gap-2"
         >
-          <div className="relative">
-            <div className="relative overflow-hidden rounded-full ring-1 ring-brand-mist/25 transition-shadow duration-300 group-hover:ring-2 group-hover:ring-brand-mist/70 group-hover:shadow-[0_0_18px_rgba(255,255,255,0.4)]">
+          <div className="relative aspect-square w-28 sm:w-32 lg:w-36">
+            <div className="relative h-full w-full overflow-hidden rounded-full ring-1 ring-brand-mist/25 transition-shadow duration-300 group-hover:ring-2 group-hover:ring-brand-mist/70 group-hover:shadow-[0_0_18px_rgba(255,255,255,0.4)]">
               <EventBadge
                 title={claim.event.title}
                 imageUrl={claim.event.imageUrl}
-                size={96}
-                className="transition-transform group-hover:-translate-y-0.5"
+                size={220}
+                className="!h-full !w-full transition-transform group-hover:-translate-y-0.5"
               />
               {/* Diagonal highlight swept across on hover via the group-hover
                   translate — clipped to the circle by overflow-hidden above. */}

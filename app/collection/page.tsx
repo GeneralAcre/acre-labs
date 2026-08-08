@@ -90,7 +90,7 @@ export default function CollectionPage() {
           </p>
         )}
 
-        <div className="grid grid-cols-2 justify-items-start gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
+        <div className="grid grid-cols-2 justify-items-start gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
           {events.map((event) => {
             const closed = now !== null && now > event.expiresAt;
             return (
@@ -100,15 +100,13 @@ export default function CollectionPage() {
                 title={event.title}
                 className="group flex flex-col items-center gap-2"
               >
-                <div className="relative aspect-square w-28 md:w-32">
+                <div className="relative aspect-square w-28 sm:w-32 lg:w-36">
                   <div className="relative h-full w-full overflow-hidden rounded-full ring-1 ring-brand-mist/25 transition-shadow duration-300 group-hover:ring-2 group-hover:ring-brand-mist/70 group-hover:shadow-[0_0_18px_rgba(255,255,255,0.4)]">
                     <EventBadge
                       title={event.title}
                       imageUrl={event.imageUrl}
                       size={220}
-                      className={`!h-full !w-full transition-transform group-hover:-translate-y-0.5 ${
-                        closed ? "opacity-50" : ""
-                      }`}
+                      className="!h-full !w-full transition-transform group-hover:-translate-y-0.5"
                     />
                     {/* Diagonal highlight swept across on hover via the
                         group-hover translate — clipped to the circle by the

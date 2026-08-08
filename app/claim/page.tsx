@@ -53,7 +53,7 @@ export default function ClaimGalleryPage() {
           </p>
         )}
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6 lg:grid-cols-6">
+        <div className="grid grid-cols-2 justify-items-start gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
           {events.map((event) => {
             const closed = now !== null && now > event.expiresAt;
             return (
@@ -63,11 +63,11 @@ export default function ClaimGalleryPage() {
                 title={event.title}
                 className="group flex flex-col items-center gap-2"
               >
-                <div className="relative aspect-square w-28 md:w-32">
+                <div className="relative aspect-square w-28 sm:w-32 lg:w-36">
                   <EventBadge
                     title={event.title}
                     imageUrl={event.imageUrl}
-                    size={160}
+                    size={220}
                     className={`!h-full !w-full transition-transform group-hover:-translate-y-0.5 group-hover:shadow-md ${
                       closed ? "opacity-50" : ""
                     }`}
