@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createEvent, getClaimCount, listEventsByOwner } from "@/lib/store";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth";
+import { isGenuineDropClone } from "@/lib/web3/verifyClone";
 
 function requireOwner(request: NextRequest): string | null {
   return verifySessionToken(request.cookies.get(SESSION_COOKIE_NAME)?.value);
@@ -14,6 +15,10 @@ function requireOwner(request: NextRequest): string | null {
 const MAX_IMAGE_DATA_URL_BYTES = 1024 * 1024;
 
 const MAX_SUPPLY_CAP = 200;
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
+const TX_HASH_RE = /^0x[a-fA-F0-9]{64}$/;
 
 // Organizer-only view — includes each drop's secretCode, so it's scoped to
 // the signed-in wallet's own drops rather than listing every drop ever
@@ -41,12 +46,25 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
+  const id = body?.id;
+  const contractAddress = body?.contractAddress;
+  const deployTxHash = body?.deployTxHash;
   const title = body?.title;
   const description = body?.description;
   const location = body?.location;
   const eventEndTime = Number(body?.eventEndTime);
   const imageUrl = body?.imageUrl;
   const maxSupplyRaw = body?.maxSupply;
+
+  if (typeof id !== "string" || !UUID_RE.test(id)) {
+    return NextResponse.json({ error: "id must be a valid client-generated uuid" }, { status: 400 });
+  }
+  if (typeof contractAddress !== "string" || !ADDRESS_RE.test(contractAddress)) {
+    return NextResponse.json({ error: "contractAddress must be a valid contract address" }, { status: 400 });
+  }
+  if (deployTxHash !== undefined && (typeof deployTxHash !== "string" || !TX_HASH_RE.test(deployTxHash))) {
+    return NextResponse.json({ error: "deployTxHash must be a valid transaction hash" }, { status: 400 });
+  }
 
   if (typeof title !== "string" || !title.trim()) {
     return NextResponse.json({ error: "title is required" }, { status: 400 });
@@ -84,7 +102,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const isGenuine = await isGenuineDropClone(contractAddress);
+  if (!isGenuine) {
+    return NextResponse.json(
+      { error: "contractAddress doesn't look like a drop contract deployed by AcreLabs' factory." },
+      { status: 400 }
+    );
+  }
+
   const record = await createEvent({
+    id,
+    contractAddress,
+    deployTxHash: typeof deployTxHash === "string" ? deployTxHash : undefined,
     title: title.trim(),
     description: description.trim(),
     location: location.trim(),

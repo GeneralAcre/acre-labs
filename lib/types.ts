@@ -8,6 +8,10 @@ export interface EventRecord {
   description?: string;
   location?: string;
   contractAddress: string;
+  // Tx that deployed this drop's own clone contract — absent for historic
+  // rows created before the factory/clone migration, which all share
+  // SHARED_DROP_CONTRACT_ADDRESS instead.
+  deployTxHash?: string;
   secretCode: string;
   eventEndTime: number;
   expiresAt: number;

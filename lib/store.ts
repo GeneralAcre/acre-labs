@@ -1,7 +1,6 @@
 import { Prisma, type Event as PrismaEvent, type Claim as PrismaClaim } from "@prisma/client";
 import { prisma } from "./prisma";
 import { generateSecretCode, normalizeCode } from "./code";
-import { SHARED_DROP_CONTRACT_ADDRESS } from "./web3/chains";
 import { resolveTokenId } from "./web3/verifyMintTx";
 import type {
   ClaimRecord,
@@ -30,6 +29,7 @@ function toEventRecord(row: PrismaEvent): EventRecord {
     description: row.description ?? undefined,
     location: row.location ?? undefined,
     contractAddress: row.contractAddress,
+    deployTxHash: row.deployTxHash ?? undefined,
     secretCode: row.secretCode,
     eventEndTime: row.eventEndTime.getTime(),
     expiresAt: row.expiresAt.getTime(),
@@ -74,6 +74,9 @@ function generateSlugCandidate(title: string): string {
 const MAX_SLUG_ATTEMPTS = 5;
 
 export interface CreateEventInput {
+  id: string; // client-generated uuid, baked into the drop's clone contract's baseURI before this row exists
+  contractAddress: string;
+  deployTxHash?: string;
   title: string;
   description?: string;
   location?: string;
@@ -89,11 +92,13 @@ export async function createEvent(input: CreateEventInput): Promise<EventRecord>
     try {
       const created = await prisma.event.create({
         data: {
+          id: input.id,
           slug,
           title: input.title,
           description: input.description,
           location: input.location,
-          contractAddress: SHARED_DROP_CONTRACT_ADDRESS,
+          contractAddress: input.contractAddress,
+          deployTxHash: input.deployTxHash,
           secretCode: generateSecretCode(),
           eventEndTime: new Date(input.eventEndTime),
           expiresAt: new Date(input.eventEndTime + CLAIM_WINDOW_MS),

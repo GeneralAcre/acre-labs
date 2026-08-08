@@ -3,13 +3,23 @@
 import { BrowserProvider, Contract } from "ethers";
 import { ensureActiveChain, resolveProvider, watchNftAsset, Web3ClaimError } from "./wallet";
 import { findMintedTokenId } from "./transferLog";
+import { SHARED_DROP_CONTRACT_ADDRESS } from "./chains";
 import type { Eip1193Provider } from "./providers";
 
 // Minting requires a voucher signed by the app's backend for this exact
-// (eventId, wallet, deadline) — the contract rejects anything else, so a
-// direct call bypassing the app's code/expiry/cap checks always reverts.
-const CLAIM_ABI = [
+// (wallet, deadline) — the contract rejects anything else, so a direct call
+// bypassing the app's code/expiry/cap checks always reverts.
+//
+// Two ABI shapes coexist during the factory/clone migration: drops created
+// before it still point at SHARED_DROP_CONTRACT_ADDRESS and expect the old
+// eventId-bearing claim() signature; every per-drop clone from
+// EventDropFactory uses the simplified one (see lib/web3/voucher.ts for the
+// matching voucher-digest branch).
+const CLAIM_ABI_LEGACY = [
   "function claim(string eventId, uint256 deadline, bytes signature) external returns (uint256)",
+];
+const CLAIM_ABI = [
+  "function claim(uint256 deadline, bytes signature) external returns (uint256)",
 ];
 
 export { Web3ClaimError };
@@ -82,10 +92,13 @@ export async function claimNftOnChain(
     // structurally compatible with ours but declared in a separate package.
     const provider = new BrowserProvider(injected as ConstructorParameters<typeof BrowserProvider>[0]);
     const signer = await provider.getSigner();
-    const contract = new Contract(contractAddress, CLAIM_ABI, signer);
+    const isLegacy = contractAddress.toLowerCase() === SHARED_DROP_CONTRACT_ADDRESS.toLowerCase();
+    const contract = new Contract(contractAddress, isLegacy ? CLAIM_ABI_LEGACY : CLAIM_ABI, signer);
     const walletAddress = await signer.getAddress();
 
-    const tx = await contract.claim(voucher.eventId, voucher.deadline, voucher.signature);
+    const tx = isLegacy
+      ? await contract.claim(voucher.eventId, voucher.deadline, voucher.signature)
+      : await contract.claim(voucher.deadline, voucher.signature);
     const receipt = await tx.wait();
     const txHash: string = receipt?.hash ?? tx.hash;
 

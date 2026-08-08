@@ -41,9 +41,19 @@ export function addressExplorerUrl(address: string): string {
   return `${ACTIVE_CHAIN.explorerUrl}/address/${address}`;
 }
 
-// Every drop mints from this single AcreLabs-operated contract rather than
-// organizers bringing their own — placeholder until the real ERC-721 drop
-// contract is deployed. Override via env without a code change once it is.
+// Drops created before the factory/clone migration all mint from this one
+// AcreLabs-operated contract. Still load-bearing, not just historical: the
+// claim flow (lib/web3/voucher.ts, lib/web3/claimNft.ts) compares a drop's
+// contractAddress against this value to decide whether to use the OLD
+// (eventId-bearing) or NEW voucher digest/ABI, since any still-open historic
+// drop still points at this exact contract and expects the old claim()
+// signature.
 export const SHARED_DROP_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_DROP_CONTRACT_ADDRESS ??
   "0x00000000000000000000000000000000DeaDBeef";
+
+// Organizers deploy their own dedicated EIP-1167 clone via this factory when
+// creating a new drop (lib/web3/factory.ts) — their wallet pays the gas and
+// becomes the clone's owner. Set after running `npm run deploy-factory` in
+// acre-labs-contracts.
+export const DROP_FACTORY_ADDRESS = process.env.NEXT_PUBLIC_DROP_FACTORY_ADDRESS ?? "";

@@ -5,10 +5,12 @@ import Link from "next/link";
 import type { EventRecord } from "@/lib/types";
 import { EventBadge } from "@/components/EventBadge";
 import { useWallet } from "@/components/WalletProvider";
-import { signMessage } from "@/lib/web3/wallet";
+import { signMessage, Web3ClaimError } from "@/lib/web3/wallet";
 import { signInMessage } from "@/lib/authMessage";
 import { useOrigin } from "@/lib/useOrigin";
 import { useNow } from "@/lib/useNow";
+import { deployDropContract } from "@/lib/web3/factory";
+import { DROP_FACTORY_ADDRESS } from "@/lib/web3/chains";
 
 // Claim count is derived server-side (from the claims store) and attached
 // on top of the plain EventRecord shape returned by GET /api/events.
@@ -150,7 +152,14 @@ export default function CreateDropPage() {
   const [imageDataUrl, setImageDataUrl] = useState("");
   const [maxSupply, setMaxSupply] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [deployStep, setDeployStep] = useState<"idle" | "deploying" | "saving">("idle");
   const [error, setError] = useState<string | null>(null);
+  // A drop already deployed on-chain but not yet persisted (e.g. the
+  // follow-up POST /api/events failed) — retrying reuses this instead of
+  // paying gas to deploy a second, orphaned clone for the same drop.
+  const [pendingDeployment, setPendingDeployment] = useState<
+    { id: string; contractAddress: string; txHash: string } | null
+  >(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const [extendDrafts, setExtendDrafts] = useState<Record<string, string>>({});
@@ -275,12 +284,50 @@ export default function CreateDropPage() {
       return;
     }
 
+    if (!provider) {
+      setError("Connect your wallet first.");
+      return;
+    }
+    if (!DROP_FACTORY_ADDRESS) {
+      setError("Drop factory isn't configured. Contact support.");
+      return;
+    }
+
     setSubmitting(true);
     try {
+      // Reuse a deploy already in flight from a previous failed submit
+      // instead of paying gas to deploy a second, orphaned clone.
+      let deployment = pendingDeployment;
+      if (!deployment) {
+        setDeployStep("deploying");
+        const configRes = await fetch("/api/events/deploy-config");
+        const config = await configRes.json().catch(() => null);
+        if (!configRes.ok || !config?.signerAddress) {
+          setError(config?.error ?? "Failed to load deploy configuration.");
+          return;
+        }
+
+        const id = crypto.randomUUID();
+        const baseURI = `${origin}/api/metadata/${id}`;
+
+        const { contractAddress, txHash } = await deployDropContract(
+          DROP_FACTORY_ADDRESS,
+          config.signerAddress,
+          baseURI,
+          provider
+        );
+        deployment = { id, contractAddress, txHash };
+        setPendingDeployment(deployment);
+      }
+
+      setDeployStep("saving");
       const res = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: deployment.id,
+          contractAddress: deployment.contractAddress,
+          deployTxHash: deployment.txHash,
           title: title.trim(),
           description: description.trim(),
           location: location.trim(),
@@ -292,10 +339,13 @@ export default function CreateDropPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        // Deployment already succeeded on-chain — keep it in pendingDeployment
+        // so a retry reuses it instead of redeploying.
         setError(data.error ?? "Failed to create drop.");
         return;
       }
 
+      setPendingDeployment(null);
       setTitle("");
       setDescription("");
       setLocation("");
@@ -304,8 +354,11 @@ export default function CreateDropPage() {
       setMaxSupply("");
       if (fileInputRef.current) fileInputRef.current.value = "";
       await loadEvents();
+    } catch (err) {
+      setError(err instanceof Web3ClaimError ? err.message : "Failed to create drop.");
     } finally {
       setSubmitting(false);
+      setDeployStep("idle");
     }
   }
 
@@ -525,13 +578,23 @@ export default function CreateDropPage() {
 
           {error && <p className="text-sm text-brand-red">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="pill-dark h-12 self-start px-8 text-sm font-medium disabled:opacity-50"
-          >
-            {submitting ? "Creating…" : "Create drop"}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="pill-dark h-12 self-start px-8 text-sm font-medium disabled:opacity-50"
+            >
+              {deployStep === "deploying"
+                ? "Deploying contract…"
+                : deployStep === "saving"
+                  ? "Saving drop…"
+                  : "Create drop"}
+            </button>
+            <p className="text-xs text-brand-mist/40">
+              Creating a drop deploys its own contract from your wallet — you&apos;ll be asked to
+              approve a small AVAX gas fee.
+            </p>
+          </div>
         </form>
 
         <aside className="flex flex-col gap-8">

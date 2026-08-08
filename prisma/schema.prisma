@@ -24,6 +24,9 @@ model Event {
   title           String
   description     String?
   contractAddress String
+  // Tx that deployed this drop's own clone contract via EventDropFactory —
+  // null for historic rows created before the factory/clone migration.
+  deployTxHash    String?
   secretCode      String
   location        String?
   eventEndTime    DateTime
