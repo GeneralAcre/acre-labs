@@ -28,7 +28,7 @@ export default function Home() {
           </h1>
 
           <p className="mt-4 font-serif text-lg italic text-brand-mist/90">
-            Finalized on Avalanche in seconds.
+            Everything happens on Avalanche, recognized by us
           </p>
 
           <div className="mt-8 flex w-full flex-row gap-3 sm:w-auto">

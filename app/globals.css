@@ -23,7 +23,7 @@
   --color-brand-surface: var(--brand-surface);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-iceberg);
+  --font-heading: var(--font-arimo);
 }
 
 body {
