@@ -11,11 +11,6 @@ export function TypingText({ text, className }: TypingTextProps) {
   const [visibleText, setVisibleText] = useState("");
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const timer = window.setTimeout(() => setVisibleText(text), 0);
-      return () => window.clearTimeout(timer);
-    }
-
     let index = 0;
     const timer = window.setInterval(() => {
       index += 1;

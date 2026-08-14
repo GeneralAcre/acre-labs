@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { HeroBackground } from "@/components/HeroBackground";
 import { ProjectsCarousel } from "@/components/ProjectsCarousel";
+import { TypingText } from "@/components/TypingText";
 
 export default function Home() {
   return (
@@ -25,9 +26,10 @@ export default function Home() {
 
       <section className="px-6 py-16 sm:px-10 sm:py-20">
         <div className="mx-auto w-full max-w-5xl">
-          <p className="max-w-3xl text-2xl font-semibold leading-[0.95] tracking-tight text-brand-mist/80 sm:text-4xl">
-            Acre Labs is a growing library of projects that collect, recognize, and preserve the moments that matter across Avalanche.
-          </p>
+          <TypingText
+            text="Acre Labs is a growing library of projects that collect, recognize, and preserve the moments that matter across Avalanche."
+            className="max-w-3xl text-2xl font-semibold leading-[0.95] tracking-tight text-brand-mist/80 sm:text-4xl"
+          />
           <div className="mt-16 max-w-xl sm:mt-20">
             <h2 className="mt-3 font-heading text-4xl uppercase leading-[0.95] tracking-tight text-brand-mist sm:text-5xl">A library for Avalanche moments</h2>
           </div>
