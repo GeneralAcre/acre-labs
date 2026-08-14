@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { WalletButton } from "./WalletButton";
 
 const NAV_LINKS = [
@@ -22,6 +23,7 @@ function MenuIcon() {
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -31,6 +33,8 @@ export function Header() {
       document.body.style.overflow = previousOverflow;
     };
   }, [menuOpen]);
+
+  if (pathname === "/") return null;
 
   return (
     <header className="relative z-20 w-full border-b border-brand-mist/10 bg-brand-surface text-brand-mist">

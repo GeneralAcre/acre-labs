@@ -52,12 +52,12 @@ export default function CollectionPage() {
     <div className="flex flex-1 flex-col">
       <div className="brand-gradient pt-20 pb-14">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-start px-4 text-left">
-          <span className="brand-kicker text-brand-mist/80">Every Drop</span>
+          <span className="brand-kicker text-brand-mist/80">Acre Labs Gallery</span>
           <h1 className="mt-4 font-heading text-4xl uppercase tracking-tight text-brand-mist">
-            Collection
+            The Avalanche Library
           </h1>
           <p className="mt-3 max-w-md text-sm text-brand-mist/90">
-            Every event NFT badge ever created on AcreLabs
+            Explore recognized moments on Avalanche. Badges are the first collection in the library.
           </p>
 
           <form

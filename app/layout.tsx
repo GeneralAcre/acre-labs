@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Iceberg, Arimo } from "next/font/google";
+import { Geist, Geist_Mono, Iceberg, Arimo, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Footer } from "@/components/Footer";
@@ -29,6 +29,11 @@ const arimo = Arimo({
   subsets: ["latin"],
 });
 
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "AcreLabs",
   description: "AcreLabs — claim your on-chain proof of attendance on Avalanche.",
@@ -42,7 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${iceberg.variable} ${arimo.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${iceberg.variable} ${arimo.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background">
         <PrivyClientProvider>

@@ -33,13 +33,12 @@ export default function ClaimGalleryPage() {
     <div className="flex flex-1 flex-col">
       <div className="brand-gradient pt-20 pb-14">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-start px-4 text-left">
-          <span className="brand-kicker text-brand-mist/80">Attendee Access</span>
+          <span className="brand-kicker text-brand-mist/80">An Acre Labs Project</span>
           <h1 className="mt-4 font-heading text-4xl uppercase tracking-tight text-brand-mist">
-            Claim Your Drop
+            Badge
           </h1>
           <p className="mt-3 max-w-md text-sm text-brand-mist/90">
-            Tap the drop you attended, then enter the 6-digit code shown at the
-            venue to claim your NFT on-chain.
+            Find the event you attended, then enter its code to claim your badge on-chain.
           </p>
         </div>
       </div>
