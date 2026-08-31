@@ -165,6 +165,9 @@ export default function CreateDropPage() {
   const [extendDrafts, setExtendDrafts] = useState<Record<string, string>>({});
   const [extendingId, setExtendingId] = useState<string | null>(null);
   const [extendError, setExtendError] = useState<string | null>(null);
+  const [supplyDrafts, setSupplyDrafts] = useState<Record<string, string>>({});
+  const [updatingSupplyId, setUpdatingSupplyId] = useState<string | null>(null);
+  const [supplyError, setSupplyError] = useState<string | null>(null);
   const origin = useOrigin();
   const now = useNow();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -391,6 +394,42 @@ export default function CreateDropPage() {
       await loadEvents();
     } finally {
       setExtendingId(null);
+    }
+  }
+
+  async function handleSupplyUpdate(event: OrganizerEvent) {
+    const rawSupply = supplyDrafts[event.id] ?? String(event.maxSupply ?? "");
+    const nextSupply = Number(rawSupply);
+    if (!Number.isInteger(nextSupply) || nextSupply < 1 || nextSupply > MAX_SUPPLY_CAP) {
+      setSupplyError(`Supply must be a whole number between 1 and ${MAX_SUPPLY_CAP}.`);
+      return;
+    }
+    if (nextSupply < event.claimedCount) {
+      setSupplyError(`Supply cannot be lower than the ${event.claimedCount} badge${event.claimedCount === 1 ? "" : "s"} already claimed.`);
+      return;
+    }
+
+    setSupplyError(null);
+    setUpdatingSupplyId(event.id);
+    try {
+      const res = await fetch(`/api/events/${event.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maxSupply: nextSupply }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setSupplyError(data?.error ?? "Failed to update supply.");
+        return;
+      }
+      setSupplyDrafts((current) => {
+        const next = { ...current };
+        delete next[event.id];
+        return next;
+      });
+      await loadEvents();
+    } finally {
+      setUpdatingSupplyId(null);
     }
   }
 
@@ -655,6 +694,27 @@ export default function CreateDropPage() {
                 </p>
                 <div className="flex items-center gap-2">
                   <input
+                    type="number"
+                    min="1"
+                    max={MAX_SUPPLY_CAP}
+                    step="1"
+                    aria-label={`Max supply for ${event.title}`}
+                    value={supplyDrafts[event.id] ?? String(event.maxSupply ?? "")}
+                    onChange={(e) =>
+                      setSupplyDrafts((current) => ({ ...current, [event.id]: e.target.value }))
+                    }
+                    className="flex-1 rounded-md border border-brand-mist/15 bg-brand-surface px-2 py-1.5 text-[11px] text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+                  />
+                  <button
+                    onClick={() => handleSupplyUpdate(event)}
+                    disabled={updatingSupplyId === event.id}
+                    className="whitespace-nowrap rounded-md border border-brand-mist/15 px-2 py-1.5 text-[11px] font-medium text-brand-mist hover:bg-brand-ink disabled:opacity-50"
+                  >
+                    {updatingSupplyId === event.id ? "Saving…" : "Update supply"}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
                     type="date"
                     value={extendDrafts[event.id] ?? ""}
                     onChange={(e) =>
@@ -675,6 +735,7 @@ export default function CreateDropPage() {
           </div>
 
           {extendError && <p className="text-sm text-brand-red">{extendError}</p>}
+          {supplyError && <p className="text-sm text-brand-red">{supplyError}</p>}
 
           {historyEvents.length > 0 && (
             <div className="flex flex-col gap-1 border-t border-brand-mist/10 pt-6">

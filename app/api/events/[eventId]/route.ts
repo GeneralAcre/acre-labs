@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEventBySlug, toPublicEventWithSupply, updateEvent } from "@/lib/store";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth";
 
+const MAX_SUPPLY_CAP = 200;
+
 // The dynamic segment here is the event's public slug (e.g.
 // "avalanche-summit-afterparty-482917"), not the internal uuid `id` — the
 // folder's still named [eventId] to avoid an unrelated file-move, but the
@@ -35,14 +37,37 @@ export async function PATCH(
 
   const { eventId: id } = await params;
   const body = await request.json().catch(() => null);
-  const expiresAt = Number(body?.expiresAt);
-  if (!Number.isFinite(expiresAt)) {
-    return NextResponse.json({ error: "expiresAt is required" }, { status: 400 });
+  const input: { expiresAt?: number; maxSupply?: number } = {};
+
+  if (body?.expiresAt !== undefined) {
+    const expiresAt = Number(body.expiresAt);
+    if (!Number.isFinite(expiresAt)) {
+      return NextResponse.json({ error: "expiresAt must be a valid timestamp" }, { status: 400 });
+    }
+    input.expiresAt = expiresAt;
   }
 
-  const updated = await updateEvent(id, owner, { expiresAt });
+  if (body?.maxSupply !== undefined) {
+    const maxSupply = Number(body.maxSupply);
+    if (!Number.isInteger(maxSupply) || maxSupply < 1 || maxSupply > MAX_SUPPLY_CAP) {
+      return NextResponse.json(
+        { error: `maxSupply must be a whole number between 1 and ${MAX_SUPPLY_CAP}` },
+        { status: 400 }
+      );
+    }
+    input.maxSupply = maxSupply;
+  }
+
+  if (input.expiresAt === undefined && input.maxSupply === undefined) {
+    return NextResponse.json({ error: "Provide a claim deadline or max supply" }, { status: 400 });
+  }
+
+  const updated = await updateEvent(id, owner, input);
   if (!updated) {
-    return NextResponse.json({ error: "Drop not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Drop not found, or its claimed badges exceed the requested supply" },
+      { status: 409 }
+    );
   }
 
   return NextResponse.json({ event: updated });

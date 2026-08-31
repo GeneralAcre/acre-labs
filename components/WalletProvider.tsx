@@ -121,9 +121,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       );
       return;
     }
+    if (!privy.ready) {
+      setError("Email sign-in is still loading. Please try again in a moment.");
+      return;
+    }
+    if (privy.error) {
+      setError(`Email sign-in is unavailable: ${privy.error.message}`);
+      return;
+    }
     setChooserOpen(false);
     setConnecting(true);
-    privy.login();
+    // Specify email here as well as in the provider config so this action
+    // remains email-only if the global Privy login configuration changes.
+    privy.login({ loginMethods: ["email"] });
   }, [privy]);
 
   const closeChooser = useCallback(() => setChooserOpen(false), []);
@@ -248,8 +258,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       address,
       provider,
       providerName,
-      connecting,
-      error,
+      connecting: connecting && !privy.error,
+      error: error ?? (privy.error ? `Email sign-in is unavailable: ${privy.error.message}` : null),
       availableWallets,
       isChooserOpen,
       beginConnect,
@@ -271,6 +281,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       connectWithEmail,
       closeChooser,
       disconnect,
+      privy.error,
     ]
   );
 

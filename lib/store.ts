@@ -146,13 +146,19 @@ export async function getEvent(id: string): Promise<EventRecord | undefined> {
 export async function updateEvent(
   id: string,
   ownerAddress: string,
-  input: { expiresAt: number }
+  input: { expiresAt?: number; maxSupply?: number }
 ): Promise<EventRecord | null> {
+  const data: Prisma.EventUpdateManyMutationInput = {};
+  if (input.expiresAt !== undefined) data.expiresAt = new Date(input.expiresAt);
+  if (input.maxSupply !== undefined) data.maxSupply = input.maxSupply;
+
   const { count } = await prisma.event.updateMany({
-    where: { id, ownerAddress: ownerAddress.toLowerCase() },
-    data: {
-      expiresAt: new Date(input.expiresAt),
+    where: {
+      id,
+      ownerAddress: ownerAddress.toLowerCase(),
+      ...(input.maxSupply !== undefined ? { claimedCount: { lte: input.maxSupply } } : {}),
     },
+    data,
   });
   if (count === 0) return null;
 
