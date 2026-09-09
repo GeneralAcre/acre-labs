@@ -22,7 +22,7 @@ export function Footer() {
             title="Projects"
             links={[
               { href: "/badge", label: "Badge" },
-              { href: "/badge", label: "Explore badges" },
+              { href: "/content", label: "Content" },
             ]}
           />
           <FooterLinks

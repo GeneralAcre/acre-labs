@@ -6,12 +6,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WalletButton } from "./WalletButton";
 
-const NAV_LINKS = [
-  { href: "/claim", label: "Claim" },
-  { href: "/collection", label: "Collection" },
-  { href: "/profile", label: "Profile" },
-  { href: "/create", label: "Create Drop" },
-];
+// Claim and Create are the two routes each product owns separately
+// (Content's own /content/claim and /content/create); Collection and Profile
+// are a wallet's unified "everything I own", shared across both products.
+function navLinksFor(pathname: string) {
+  const inContent = pathname.startsWith("/content");
+  return [
+    { href: inContent ? "/content/claim" : "/claim", label: "Claim" },
+    { href: "/collection", label: "Collection" },
+    { href: "/profile", label: "Profile" },
+    { href: inContent ? "/content/create" : "/create", label: inContent ? "Host" : "Create Drop" },
+  ];
+}
 
 function MenuIcon() {
   return (
@@ -36,6 +42,8 @@ export function Header() {
 
   if (pathname === "/") return null;
 
+  const navLinks = navLinksFor(pathname);
+
   return (
     <header className="relative z-20 w-full border-b border-brand-mist/10 bg-brand-surface text-brand-mist">
       <div className="mx-auto flex w-full items-center justify-between px-6 py-4 sm:px-10">
@@ -52,7 +60,7 @@ export function Header() {
 
         <div className="hidden items-center gap-6 sm:flex">
           <nav className="flex items-center gap-6 text-xs font-medium uppercase tracking-[0.2em]">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link key={link.href} href={link.href} className="transition-opacity hover:opacity-60">
                 {link.label}
               </Link>
@@ -97,7 +105,7 @@ export function Header() {
           </div>
 
           <nav className="flex flex-1 flex-col items-center justify-center gap-2 px-6">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

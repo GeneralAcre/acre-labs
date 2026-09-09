@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import type { CollectedClaim } from "@/lib/types";
-import { EventBadge } from "@/components/EventBadge";
+import { PassportCard } from "@/components/PassportCard";
 import { useWallet } from "@/components/WalletProvider";
 import { ACTIVE_CHAIN, txExplorerUrl } from "@/lib/web3/chains";
 import { watchNftAsset } from "@/lib/web3/wallet";
@@ -111,7 +111,7 @@ export default function ClaimDetailPage({
           it via negative margin, so it never has to carry readable text. */}
       <div className="brand-gradient h-40 sm:h-48" />
 
-      <div className="mx-auto -mt-28 w-full max-w-5xl flex-1 px-4 pb-16 sm:-mt-32">
+      <div className="mx-auto -mt-28 w-full max-w-3xl flex-1 px-4 pb-16 sm:-mt-32">
         <Link
           href={backHref}
           className="pill-light mb-6 inline-flex h-9 items-center gap-1.5 px-4 text-xs font-medium"
@@ -119,115 +119,118 @@ export default function ClaimDetailPage({
           {backLabel}
         </Link>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[320px_1fr]">
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-brand-mist/10 bg-brand-surface p-8 text-center shadow-sm">
-            <EventBadge title={claim.event.title} imageUrl={claim.event.imageUrl} size={220} />
+        <div className="flex flex-col items-center gap-6">
+          <PassportCard
+            title={claim.event.title}
+            imageUrl={claim.event.imageUrl}
+            location={claim.event.location}
+            eventEndTime={claim.event.eventEndTime}
+            holderAddress={claim.walletAddress}
+            verifyPath={`/collection/${claim.txHash}`}
+            tokenId={claim.tokenId}
+            passLabel={isMine ? "Your Hackathon Pass" : "Hackathon Pass"}
+          />
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="pill-outline-light inline-flex h-9 items-center px-4 text-xs font-medium text-brand-mist/70">
               {isMine ? "Claimed by you" : `Claimed by ${shortenAddress(claim.walletAddress)}`}
             </span>
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-medium ${
+                closed ? "bg-brand-red/10 text-brand-red" : "bg-brand-mist/10 text-brand-mist"
+              }`}
+            >
+              {closed ? "Claim window closed" : "Claim open"}
+            </span>
+            <span className="rounded-full bg-brand-mist/10 px-3 py-1 text-xs font-medium text-brand-mist">
+              {ACTIVE_CHAIN.name}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-8 flex flex-col gap-5 text-left">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium uppercase tracking-wide text-brand-mist/40">
+            <span>
+              Drop <span className="text-brand-mist">#{shortDropId(claim.event.id)}</span>
+            </span>
+            <span>/</span>
+            <a
+              href={txExplorerUrl(claim.txHash)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="normal-case tracking-normal text-brand-red hover:underline"
+            >
+              View on SnowTrace
+            </a>
           </div>
 
-          <div className="flex flex-col gap-5 text-left">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium uppercase tracking-wide text-brand-mist/40">
-              <span>
-                Drop <span className="text-brand-mist">#{shortDropId(claim.event.id)}</span>
-              </span>
-              <span>/</span>
-              <a
-                href={txExplorerUrl(claim.txHash)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="normal-case tracking-normal text-brand-red hover:underline"
-              >
-                View on SnowTrace
-              </a>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
+              <span className="text-xs text-brand-mist/50">Claimed</span>
+              <p className="mt-1 text-sm font-medium text-brand-mist">
+                {formatDate(claim.claimedAt)}
+              </p>
             </div>
-
-            <h1 className="font-heading text-3xl uppercase leading-tight tracking-tight text-brand-mist sm:text-4xl">
-              {claim.event.title}
-            </h1>
-
-            <div className="flex flex-wrap gap-2">
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  closed ? "bg-brand-red/10 text-brand-red" : "bg-brand-mist/10 text-brand-mist"
-                }`}
-              >
-                {closed ? "Claim window closed" : "Claim open"}
-              </span>
-              <span className="rounded-full bg-brand-mist/10 px-3 py-1 text-xs font-medium text-brand-mist">
-                {ACTIVE_CHAIN.name}
-              </span>
+            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
+              <span className="text-xs text-brand-mist/50">Event Ended</span>
+              <p className="mt-1 text-sm font-medium text-brand-mist">
+                {formatDate(claim.event.eventEndTime)}
+              </p>
             </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
-                <span className="text-xs text-brand-mist/50">Claimed</span>
-                <p className="mt-1 text-sm font-medium text-brand-mist">
-                  {formatDate(claim.claimedAt)}
-                </p>
-              </div>
-              <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
-                <span className="text-xs text-brand-mist/50">Event Ended</span>
-                <p className="mt-1 text-sm font-medium text-brand-mist">
-                  {formatDate(claim.event.eventEndTime)}
-                </p>
-              </div>
-              <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
-                <span className="text-xs text-brand-mist/50">Wallet</span>
-                <p className="mt-1 font-mono text-sm font-medium text-brand-mist">
-                  {shortenAddress(claim.walletAddress)}
-                </p>
-              </div>
-              <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
-                <span className="text-xs text-brand-mist/50">Contract</span>
-                {isMine ? (
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <p className="break-all font-mono text-sm font-medium text-brand-mist">
-                      {claim.event.contractAddress}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => copyContract(claim.event.contractAddress)}
-                      className="shrink-0 text-xs font-medium text-brand-red hover:underline"
-                    >
-                      {copied ? "Copied!" : "Copy"}
-                    </button>
-                  </div>
-                ) : (
-                  <p className="mt-1 font-mono text-sm font-medium text-brand-mist">
-                    {shortenAddress(claim.event.contractAddress)}
+            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
+              <span className="text-xs text-brand-mist/50">Wallet</span>
+              <p className="mt-1 font-mono text-sm font-medium text-brand-mist">
+                {shortenAddress(claim.walletAddress)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
+              <span className="text-xs text-brand-mist/50">Contract</span>
+              {isMine ? (
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="break-all font-mono text-sm font-medium text-brand-mist">
+                    {claim.event.contractAddress}
                   </p>
-                )}
-              </div>
-              <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
-                <span className="text-xs text-brand-mist/50">Token ID</span>
+                  <button
+                    type="button"
+                    onClick={() => copyContract(claim.event.contractAddress)}
+                    className="shrink-0 text-xs font-medium text-brand-red hover:underline"
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              ) : (
                 <p className="mt-1 font-mono text-sm font-medium text-brand-mist">
-                  {claim.tokenId ?? "—"}
+                  {shortenAddress(claim.event.contractAddress)}
                 </p>
-              </div>
-              <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm sm:col-span-2">
-                <span className="text-xs text-brand-mist/50">Transaction</span>
-                <p className="mt-1 break-all font-mono text-sm font-medium text-brand-mist">
-                  {claim.txHash}
-                </p>
-              </div>
+              )}
             </div>
-
-            {isMine && claim.tokenId && provider && (
-              <button
-                type="button"
-                onClick={() => addToMetaMask(claim.event.contractAddress, claim.tokenId as string)}
-                className="pill-outline-light h-11 w-full self-start px-6 text-sm font-medium sm:w-auto"
-              >
-                {addToWalletState === "added"
-                  ? "Added to wallet"
-                  : addToWalletState === "failed"
-                  ? "Couldn't add — try manually"
-                  : "Add to MetaMask"}
-              </button>
-            )}
+            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
+              <span className="text-xs text-brand-mist/50">Token ID</span>
+              <p className="mt-1 font-mono text-sm font-medium text-brand-mist">
+                {claim.tokenId ?? "—"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm sm:col-span-2">
+              <span className="text-xs text-brand-mist/50">Transaction</span>
+              <p className="mt-1 break-all font-mono text-sm font-medium text-brand-mist">
+                {claim.txHash}
+              </p>
+            </div>
           </div>
+
+          {isMine && claim.tokenId && provider && (
+            <button
+              type="button"
+              onClick={() => addToMetaMask(claim.event.contractAddress, claim.tokenId as string)}
+              className="pill-outline-light h-11 w-full self-start px-6 text-sm font-medium sm:w-auto"
+            >
+              {addToWalletState === "added"
+                ? "Added to wallet"
+                : addToWalletState === "failed"
+                ? "Couldn't add — try manually"
+                : "Add to MetaMask"}
+            </button>
+          )}
         </div>
       </div>
     </div>

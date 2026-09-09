@@ -6,6 +6,7 @@ import type {
   ClaimRecord,
   CollectedClaim,
   EventRecord,
+  Product,
   PublicEvent,
   PublicEventWithSupply,
 } from "./types";
@@ -25,6 +26,7 @@ function toEventRecord(row: PrismaEvent): EventRecord {
   return {
     id: row.id,
     slug: row.slug,
+    product: row.product,
     title: row.title,
     description: row.description ?? undefined,
     location: row.location ?? undefined,
@@ -77,6 +79,7 @@ export interface CreateEventInput {
   id: string; // client-generated uuid, baked into the drop's clone contract's baseURI before this row exists
   contractAddress: string;
   deployTxHash?: string;
+  product: Product;
   title: string;
   description?: string;
   location?: string;
@@ -94,6 +97,7 @@ export async function createEvent(input: CreateEventInput): Promise<EventRecord>
         data: {
           id: input.id,
           slug,
+          product: input.product,
           title: input.title,
           description: input.description,
           location: input.location,
@@ -120,8 +124,11 @@ export async function createEvent(input: CreateEventInput): Promise<EventRecord>
   throw new Error("Failed to generate a unique slug.");
 }
 
-export async function listEvents(): Promise<EventRecord[]> {
-  const rows = await prisma.event.findMany({ orderBy: { createdAt: "desc" } });
+export async function listEvents(product?: Product): Promise<EventRecord[]> {
+  const rows = await prisma.event.findMany({
+    where: product ? { product } : undefined,
+    orderBy: { createdAt: "desc" },
+  });
   return rows.map(toEventRecord);
 }
 

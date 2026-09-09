@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const projects = [
   { number: "01", name: "Badge", description: "Collect on-chain proof of the moments you showed up for.", href: "/badge", letter: "B" },
-  { number: "02", name: "Content", description: "Coming soon", letter: "C" },
+  { number: "02", name: "Content", description: "Mint your passport — a ticket to join a hackathon, minted on-chain.", href: "/content", letter: "C" },
 ];
 
 export function ProjectsCarousel() {

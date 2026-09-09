@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createEvent, getClaimCount, listEventsByOwner } from "@/lib/store";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth";
 import { isGenuineDropClone } from "@/lib/web3/verifyClone";
+import type { Product } from "@/lib/types";
+
+const PRODUCTS: Product[] = ["badge", "content"];
 
 function requireOwner(request: NextRequest): string | null {
   return verifySessionToken(request.cookies.get(SESSION_COOKIE_NAME)?.value);
@@ -49,6 +52,7 @@ export async function POST(request: NextRequest) {
   const id = body?.id;
   const contractAddress = body?.contractAddress;
   const deployTxHash = body?.deployTxHash;
+  const product = body?.product;
   const title = body?.title;
   const description = body?.description;
   const location = body?.location;
@@ -64,6 +68,9 @@ export async function POST(request: NextRequest) {
   }
   if (deployTxHash !== undefined && (typeof deployTxHash !== "string" || !TX_HASH_RE.test(deployTxHash))) {
     return NextResponse.json({ error: "deployTxHash must be a valid transaction hash" }, { status: 400 });
+  }
+  if (!PRODUCTS.includes(product)) {
+    return NextResponse.json({ error: "product must be one of: badge, content" }, { status: 400 });
   }
 
   if (typeof title !== "string" || !title.trim()) {
@@ -114,6 +121,7 @@ export async function POST(request: NextRequest) {
     id,
     contractAddress,
     deployTxHash: typeof deployTxHash === "string" ? deployTxHash : undefined,
+    product,
     title: title.trim(),
     description: description.trim(),
     location: location.trim(),

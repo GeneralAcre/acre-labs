@@ -13,6 +13,14 @@ enum ClaimStatus {
   confirmed
 }
 
+// Which project on the site a drop belongs to — Badge (general proof of
+// attendance) and Content (hackathon passes) are the same claim/mint
+// mechanics under the hood, but browsed and created as separate products.
+enum Product {
+  badge
+  content
+}
+
 model Event {
   id              String   @id @default(uuid())
   // Public, human-readable identifier for the claim URL (e.g.
@@ -21,6 +29,7 @@ model Event {
   // key), so this can be regenerated or reformatted later without touching
   // anything that actually matters for claim logic.
   slug            String   @unique
+  product         Product  @default(badge)
   title           String
   description     String?
   contractAddress String

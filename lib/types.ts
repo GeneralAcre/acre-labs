@@ -1,9 +1,15 @@
+// Which project on the site a drop belongs to — Badge (general proof of
+// attendance) and Content (hackathon passes) share the same claim/mint
+// mechanics but are browsed and created as separate products.
+export type Product = "badge" | "content";
+
 export interface EventRecord {
   id: string;
   // Human-readable public identifier used in claim URLs — the uuid `id`
   // above stays the stable internal reference for everything that actually
   // matters for claim logic (Postgres FK, on-chain voucher/hasClaimed key).
   slug: string;
+  product: Product;
   title: string;
   description?: string;
   location?: string;

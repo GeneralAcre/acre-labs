@@ -1,9 +1,9 @@
 import { ClaimEventPage } from "@/components/ClaimEventPage";
 
-export default function ClaimEventRoute({
+export default function ContentClaimEventRoute({
   params,
 }: {
   params: Promise<{ eventId: string }>;
 }) {
-  return <ClaimEventPage product="badge" params={params} />;
+  return <ClaimEventPage product="content" params={params} />;
 }
