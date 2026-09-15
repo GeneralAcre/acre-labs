@@ -76,7 +76,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const beginConnect = useCallback(async () => {
+    // Guard re-entrancy: discoverProviders() below takes ~250ms during which
+    // `connecting` wasn't true yet, so a double-click (or an impatient second
+    // click) could fire eth_requestAccounts twice — Core Wallet's extension
+    // then shows its own "already pending" error toast for the duplicate.
+    if (connecting) return;
     setError(null);
+    setConnecting(true);
     const found = await discoverProviders();
     setAvailableWallets(found);
 
@@ -93,6 +99,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (found.length === 0) {
       // No injected wallet detected at all — open the picker so "Continue
       // with Email" is available instead of erroring immediately.
+      setConnecting(false);
       setChooserOpen(true);
       return;
     }
@@ -100,8 +107,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       await finishConnect(found[0]);
       return;
     }
+    setConnecting(false);
     setChooserOpen(true);
-  }, [finishConnect]);
+  }, [connecting, finishConnect]);
 
   const chooseWallet = useCallback(
     async (detail: EIP6963ProviderDetail) => {
