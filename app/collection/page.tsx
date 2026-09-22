@@ -90,7 +90,7 @@ export default function CollectionPage() {
           </p>
         )}
 
-        <div className="grid grid-cols-2 justify-items-start gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
+        <div className="grid grid-cols-2 justify-items-center gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
           {events.map((event) => {
             const closed = now !== null && now > event.expiresAt;
             return (

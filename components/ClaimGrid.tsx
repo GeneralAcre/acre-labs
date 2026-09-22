@@ -4,7 +4,7 @@ import { EventBadge } from "@/components/EventBadge";
 
 export function ClaimGrid({ claims }: { claims: CollectedClaim[] }) {
   return (
-    <div className="grid grid-cols-2 justify-items-start gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
+    <div className="grid grid-cols-2 justify-items-center gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
       {claims.map((claim) => (
         <Link
           key={`${claim.eventId}:${claim.txHash}`}

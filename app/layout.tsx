@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { WalletProvider } from "@/components/WalletProvider";
 import { PrivyClientProvider } from "@/components/PrivyClientProvider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,9 +47,11 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-background">
         <PrivyClientProvider>
           <WalletProvider>
-            <Header />
-            <div className="flex flex-1 flex-col">{children}</div>
-            <Footer />
+            <TooltipProvider>
+              <Header />
+              <div className="flex flex-1 flex-col">{children}</div>
+              <Footer />
+            </TooltipProvider>
           </WalletProvider>
         </PrivyClientProvider>
         <Analytics />

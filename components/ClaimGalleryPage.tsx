@@ -78,7 +78,7 @@ export function ClaimGalleryPage({ product }: { product: Product }) {
           <p className="text-sm text-brand-mist/60">{copy.empty}</p>
         )}
 
-        <div className="grid grid-cols-2 justify-items-start gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
+        <div className="grid grid-cols-2 justify-items-center gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
           {events.map((event) => {
             const closed = now !== null && now > event.expiresAt;
             return (
@@ -98,9 +98,6 @@ export function ClaimGalleryPage({ product }: { product: Product }) {
                     }`}
                   />
                 </div>
-                <p className="w-full max-w-[9rem] truncate text-center text-xs font-medium text-brand-mist/70">
-                  {event.title}
-                </p>
                 {closed && (
                   <span className="text-[10px] font-medium uppercase tracking-widest text-brand-mist/40">
                     Claim closed
