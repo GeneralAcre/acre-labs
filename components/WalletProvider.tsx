@@ -13,7 +13,6 @@ import {
 import { getEmbeddedConnectedWallet, usePrivy, useWallets } from "@privy-io/react-auth";
 import {
   discoverProviders,
-  isCoreProvider,
   type Eip1193Provider,
   type EIP6963ProviderDetail,
 } from "@/lib/web3/providers";
@@ -77,46 +76,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const beginConnect = useCallback(async () => {
-    // Guard re-entrancy: discoverProviders() below takes ~250ms during which
-    // `connecting` wasn't true yet, so a double-click (or an impatient second
-    // click) could fire eth_requestAccounts twice — Core Wallet's extension
-    // then shows its own "already pending" error toast for the duplicate.
-    if (connecting) return;
-    setError(null);
-    setConnecting(true);
-    const found = await discoverProviders();
-    setAvailableWallets(found);
-
-    // Core Wallet is Avalanche's native wallet — connect straight to it when
-    // it's installed instead of making the user pick, even if other wallets
-    // (e.g. MetaMask) are also present. Those remain reachable via "Use a
-    // different wallet" in the UI.
-    const core = found.find(isCoreProvider);
-    if (core) {
-      await finishConnect(core);
-      return;
-    }
-
-    if (found.length === 0) {
-      // No injected wallet detected at all — open the picker so "Continue
-      // with Email" is available instead of erroring immediately.
-      setConnecting(false);
-      setChooserOpen(true);
-      return;
-    }
-    if (found.length === 1) {
-      await finishConnect(found[0]);
-      return;
-    }
-    setConnecting(false);
-    setChooserOpen(true);
-  }, [connecting, finishConnect]);
-
-  // Unlike beginConnect, always opens the picker instead of auto-connecting
-  // to Core / the sole detected wallet — the user explicitly asked to change
-  // wallets, so skipping straight past the choice would defeat the point.
-  const switchWallet = useCallback(async () => {
+  // Always opens the picker rather than auto-connecting to Core / the sole
+  // detected wallet — that shortcut used to skip straight past "Continue
+  // with Email", so anyone with a single injected wallet installed never
+  // saw email as an option at all. Used for both the first connect and for
+  // switching an already-connected wallet.
+  const openChooser = useCallback(async () => {
     if (connecting) return;
     setError(null);
     setConnecting(true);
@@ -125,6 +90,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setConnecting(false);
     setChooserOpen(true);
   }, [connecting]);
+
+  const beginConnect = openChooser;
+  const switchWallet = openChooser;
 
   const chooseWallet = useCallback(
     async (detail: EIP6963ProviderDetail) => {
