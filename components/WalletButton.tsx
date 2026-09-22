@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useWallet } from "./WalletProvider";
 import { isCoreProvider } from "@/lib/web3/providers";
 
@@ -50,11 +51,14 @@ export function WalletButton({
     availableWallets,
     isChooserOpen,
     beginConnect,
+    switchWallet,
     chooseWallet,
     connectWithEmail,
     closeChooser,
     disconnect,
   } = useWallet();
+
+  const [isMenuOpen, setMenuOpen] = useState(false);
 
   const sizeClass = SIZE_CLASSES[size];
   const connectedToneClass = CONNECTED_TONE_CLASSES[tone];
@@ -65,12 +69,8 @@ export function WalletButton({
     <div className={`relative inline-flex flex-col items-center gap-2 ${className}`}>
       {address ? (
         <button
-          onClick={disconnect}
-          title={
-            providerName
-              ? `Connected with ${providerName}. Click to disconnect.`
-              : "Click to disconnect"
-          }
+          onClick={() => setMenuOpen((open) => !open)}
+          title={providerName ? `Connected with ${providerName}` : undefined}
           className={`${connectedToneClass} font-mono font-medium ${sizeClass}`}
         >
           {shortenAddress(address)}
@@ -85,6 +85,34 @@ export function WalletButton({
             {connecting ? "Connecting…" : connectLabel}
           </button>
         </>
+      )}
+
+      {isMenuOpen && address && (
+        <div className="absolute right-0 top-full z-20 mt-2 w-44 rounded-xl border border-brand-mist/10 bg-brand-surface p-2 text-left shadow-lg">
+          {providerName && (
+            <p className="px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-brand-mist/50">
+              {providerName}
+            </p>
+          )}
+          <button
+            onClick={() => {
+              setMenuOpen(false);
+              switchWallet();
+            }}
+            className="flex w-full items-center rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
+          >
+            Switch wallet
+          </button>
+          <button
+            onClick={() => {
+              setMenuOpen(false);
+              disconnect();
+            }}
+            className="flex w-full items-center rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
+          >
+            Disconnect
+          </button>
+        </div>
       )}
 
       {isChooserOpen && (

@@ -31,6 +31,7 @@ interface WalletContextValue {
   availableWallets: EIP6963ProviderDetail[];
   isChooserOpen: boolean;
   beginConnect: () => Promise<void>;
+  switchWallet: () => Promise<void>;
   chooseWallet: (detail: EIP6963ProviderDetail) => Promise<void>;
   connectWithEmail: () => void;
   closeChooser: () => void;
@@ -51,6 +52,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isChooserOpen, setChooserOpen] = useState(false);
   const [isPrivySession, setIsPrivySession] = useState(false);
+  const [switchingToEmail, setSwitchingToEmail] = useState(false);
   const wasPrivyModalOpenRef = useRef(false);
 
   const finishConnect = useCallback(async (detail: EIP6963ProviderDetail | null) => {
@@ -111,6 +113,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setChooserOpen(true);
   }, [connecting, finishConnect]);
 
+  // Unlike beginConnect, always opens the picker instead of auto-connecting
+  // to Core / the sole detected wallet — the user explicitly asked to change
+  // wallets, so skipping straight past the choice would defeat the point.
+  const switchWallet = useCallback(async () => {
+    if (connecting) return;
+    setError(null);
+    setConnecting(true);
+    const found = await discoverProviders();
+    setAvailableWallets(found);
+    setConnecting(false);
+    setChooserOpen(true);
+  }, [connecting]);
+
   const chooseWallet = useCallback(
     async (detail: EIP6963ProviderDetail) => {
       await finishConnect(detail);
@@ -139,6 +154,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
     setChooserOpen(false);
     setConnecting(true);
+    // Lets the embedded-wallet effect below adopt the new session even when
+    // switching away from an already-connected external wallet — its
+    // `!address` guard would otherwise block it, since `address` is still
+    // set to the wallet we're switching away from. The old address/provider
+    // are left in place until adoption actually succeeds, so cancelling the
+    // login modal leaves the previous wallet connected instead of dropping
+    // the user to a disconnected state.
+    setSwitchingToEmail(true);
     // Specify email here as well as in the provider config so this action
     // remains email-only if the global Privy login configuration changes.
     privy.login({ loginMethods: ["email"] });
@@ -207,7 +230,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   // previous visit) completes — but never overrides an already-connected
   // injected wallet session.
   useEffect(() => {
-    if (address || !privy.ready || !privy.authenticated) return;
+    if ((address && !switchingToEmail) || !privy.ready || !privy.authenticated) return;
 
     const embedded = getEmbeddedConnectedWallet(privyWallets);
     if (!embedded) return;
@@ -224,20 +247,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       } catch {
         if (!cancelled) setError("Failed to connect the embedded wallet.");
       } finally {
-        if (!cancelled) setConnecting(false);
+        if (!cancelled) {
+          setConnecting(false);
+          setSwitchingToEmail(false);
+        }
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [address, privy.ready, privy.authenticated, privyWallets]);
+  }, [address, switchingToEmail, privy.ready, privy.authenticated, privyWallets]);
 
   // If the user opens the Privy login modal and closes it without completing
   // sign-in, stop the "Connecting…" spinner instead of leaving it stuck.
   useEffect(() => {
     if (wasPrivyModalOpenRef.current && !privy.isModalOpen && !privy.authenticated) {
       setConnecting(false);
+      setSwitchingToEmail(false);
     }
     wasPrivyModalOpenRef.current = privy.isModalOpen;
   }, [privy.isModalOpen, privy.authenticated]);
@@ -271,6 +298,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       availableWallets,
       isChooserOpen,
       beginConnect,
+      switchWallet,
       chooseWallet,
       connectWithEmail,
       closeChooser,
@@ -285,6 +313,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       availableWallets,
       isChooserOpen,
       beginConnect,
+      switchWallet,
       chooseWallet,
       connectWithEmail,
       closeChooser,
