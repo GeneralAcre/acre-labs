@@ -2,6 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePrivy } from "@privy-io/react-auth";
 import type { CollectedClaim } from "@/lib/types";
 import { ClaimGrid } from "@/components/ClaimGrid";
 import { EventBadge } from "@/components/EventBadge";
@@ -43,6 +44,32 @@ function ListIcon() {
   );
 }
 
+function CopyIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="5.5" y="5.5" width="9" height="9" rx="1" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M3 10.5V2.5C3 1.94772 3.44772 1.5 4 1.5H11" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1.5 border border-brand-mist/15 bg-brand-surface px-4 py-3.5">
+      <span className="text-[10px] font-medium uppercase tracking-widest text-brand-mist/45">{label}</span>
+      <span className="font-heading text-xl leading-none tracking-tight text-brand-mist">{value}</span>
+    </div>
+  );
+}
+
 const ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
 
 type Stage = "loading" | "ready";
@@ -55,13 +82,15 @@ export default function ProfilePage({
   params: Promise<{ address: string }>;
 }) {
   const { address: routeAddress } = use(params);
-  const { address: myAddress } = useWallet();
+  const { address: myAddress, providerName } = useWallet();
+  const privy = usePrivy();
   const [claims, setClaims] = useState<CollectedClaim[]>([]);
   const [stage, setStage] = useState<Stage>("loading");
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDesc, setSortDesc] = useState(true);
   const [view, setView] = useState<ViewMode>("grid");
+  const [copied, setCopied] = useState(false);
 
   // Validity is a pure function of the route param, not fetched state — no
   // effect needed to derive it, unlike the claims list below.
@@ -89,10 +118,40 @@ export default function ProfilePage({
 
   const isMe = !!myAddress && myAddress.toLowerCase() === routeAddress.toLowerCase();
 
+  // Prefer whatever identity Privy actually has for the signed-in session
+  // (only meaningful for "me" — we have no access to another wallet's Privy
+  // account) over a bare address, since an email reads as a name and an
+  // address doesn't. Falls back to the address for everyone else, and for
+  // "me" whenever the connection isn't a Privy/email session.
+  const isEmailName = isMe && providerName === "Email" && !!privy.user?.email?.address;
+  const displayName = isEmailName ? privy.user!.email!.address! : shortenAddress(routeAddress);
+
   const earliestClaimedAt = useMemo(
     () => (claims.length ? Math.min(...claims.map((c) => c.claimedAt)) : null),
     [claims]
   );
+
+  const latestClaimedAt = useMemo(
+    () => (claims.length ? Math.max(...claims.map((c) => c.claimedAt)) : null),
+    [claims]
+  );
+
+  const productCounts = useMemo(() => {
+    let badge = 0;
+    let content = 0;
+    for (const c of claims) {
+      if (c.event.product === "badge") badge += 1;
+      else content += 1;
+    }
+    return { badge, content };
+  }, [claims]);
+
+  function copyAddress() {
+    navigator.clipboard.writeText(routeAddress).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
 
   const visibleClaims = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -142,28 +201,79 @@ export default function ProfilePage({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="bg-background relative pt-16 pb-14">
-        <Link
-          href="/collection"
-          className="absolute left-4 top-6 inline-flex items-center gap-1 text-xs font-medium text-brand-mist/70 hover:text-brand-mist"
-        >
-          Back
-        </Link>
-
+      <div className="bg-background pt-16 pb-14">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-start px-4 text-left">
-          <span className="brand-kicker text-brand-mist/80">
-            {isMe ? "Your Wallet" : "Collection"}
-          </span>
-          <h1 className="mt-4 font-heading text-4xl uppercase tracking-tight text-brand-mist">
-            {isMe ? "My Collection" : "Their Collection"}
-          </h1>
-          <p className="mt-2 font-mono text-xs text-brand-mist/70">{shortenAddress(routeAddress)}</p>
+          <div className="flex w-full flex-col gap-6 sm:flex-row sm:items-center">
+            <Link
+              href="/collection"
+              className="pill-light inline-flex h-9 shrink-0 items-center gap-1.5 px-4 text-xs font-medium"
+            >
+              Back
+            </Link>
 
-          {stage === "ready" && claims.length > 0 && (
-            <p className="mt-3 text-sm text-brand-mist/80">
-              {claims.length} badge{claims.length === 1 ? "" : "s"} collected
-              {earliestClaimedAt ? ` since ${formatDate(earliestClaimedAt)}` : ""}
-            </p>
+            <div
+              aria-hidden="true"
+              className="flex h-20 w-20 shrink-0 items-center justify-center border border-brand-mist/20 bg-brand-surface font-heading text-2xl uppercase tracking-tight text-brand-mist"
+            >
+              {routeAddress.slice(2, 4)}
+            </div>
+
+            <div className="flex flex-1 flex-col items-start gap-2">
+              <span className="brand-kicker text-brand-mist/50">
+                {isMe ? "Your Wallet" : "Collection"}
+              </span>
+
+              {isEmailName ? (
+                <>
+                  <h1 className="font-heading text-4xl leading-none tracking-tight text-brand-mist">
+                    {displayName}
+                  </h1>
+                  <button
+                    onClick={copyAddress}
+                    className="flex items-center gap-1.5 font-mono text-xs text-brand-mist/60 hover:text-brand-mist"
+                    title="Copy full address"
+                  >
+                    {shortenAddress(routeAddress)}
+                    {copied ? <CheckIcon /> : <CopyIcon />}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={copyAddress}
+                  title="Copy full address"
+                  className="group flex items-center gap-2"
+                >
+                  <h1 className="font-heading text-4xl leading-none tracking-tight text-brand-mist">
+                    {displayName}
+                  </h1>
+                  <span className="text-brand-mist/40 group-hover:text-brand-mist">
+                    {copied ? <CheckIcon /> : <CopyIcon />}
+                  </span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {stage === "ready" && (
+            <div className="mt-8 grid w-full grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+              <StatCard label="Badges" value={String(claims.length)} />
+              <StatCard
+                label="Member Since"
+                value={earliestClaimedAt ? formatDate(earliestClaimedAt) : "—"}
+              />
+              <StatCard
+                label="Latest Claim"
+                value={latestClaimedAt ? formatDate(latestClaimedAt) : "—"}
+              />
+              <StatCard
+                label="Products"
+                value={
+                  claims.length === 0
+                    ? "—"
+                    : `${productCounts.badge} Badge${productCounts.content ? ` · ${productCounts.content} Content` : ""}`
+                }
+              />
+            </div>
           )}
         </div>
       </div>

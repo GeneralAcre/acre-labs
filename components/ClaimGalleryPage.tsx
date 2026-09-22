@@ -51,6 +51,8 @@ export function ClaimGalleryPage({ product }: { product: Product }) {
     };
   }, [product]);
 
+  const openCount = now === null ? null : events.filter((e) => e.expiresAt > now).length;
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="bg-background pt-20 pb-14">
@@ -60,6 +62,12 @@ export function ClaimGalleryPage({ product }: { product: Product }) {
             {copy.title}
           </h1>
           <p className="mt-3 max-w-md text-sm text-brand-mist/90">{copy.subtitle}</p>
+
+          {!loading && events.length > 0 && (
+            <p className="mt-4 text-xs font-medium uppercase tracking-[0.14em] text-brand-mist/45">
+              {events.length} total · {openCount ?? "…"} open now
+            </p>
+          )}
         </div>
       </div>
 
@@ -89,11 +97,15 @@ export function ClaimGalleryPage({ product }: { product: Product }) {
                       closed ? "opacity-50" : ""
                     }`}
                   />
-                  <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-[10rem] -translate-x-1/2 rounded-lg bg-brand-ink px-3 py-1.5 text-xs font-medium text-brand-mist opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-                    {event.title}
-                    {closed ? " — Claim closed" : ""}
-                  </span>
                 </div>
+                <p className="w-full max-w-[9rem] truncate text-center text-xs font-medium text-brand-mist/70">
+                  {event.title}
+                </p>
+                {closed && (
+                  <span className="text-[10px] font-medium uppercase tracking-widest text-brand-mist/40">
+                    Claim closed
+                  </span>
+                )}
               </Link>
             );
           })}

@@ -490,7 +490,7 @@ export function CreateDropPage({ product }: { product: Product }) {
   if (!address) {
     return (
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 px-6 py-24 text-center">
-        <span className="brand-kicker text-brand-red">{copy.newDropKicker}</span>
+        <span className="brand-kicker text-brand-mist/50">{copy.newDropKicker}</span>
         <h1 className="font-heading text-3xl uppercase tracking-tight text-brand-mist">
           Connect Your Wallet
         </h1>
@@ -509,7 +509,7 @@ export function CreateDropPage({ product }: { product: Product }) {
   if (!isAuthenticated) {
     return (
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 px-6 py-24 text-center">
-        <span className="brand-kicker text-brand-red">{copy.newDropKicker}</span>
+        <span className="brand-kicker text-brand-mist/50">{copy.newDropKicker}</span>
         <h1 className="font-heading text-3xl uppercase tracking-tight text-brand-mist">
           Sign In
         </h1>
@@ -534,7 +534,7 @@ export function CreateDropPage({ product }: { product: Product }) {
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-16">
       <div className="flex flex-col gap-2">
-        <span className="brand-kicker text-brand-red">{copy.newDropKicker}</span>
+        <span className="brand-kicker text-brand-mist/50">{copy.newDropKicker}</span>
         <h1 className="font-heading text-4xl uppercase tracking-tight text-brand-mist sm:text-5xl">
           {copy.heading}
         </h1>
@@ -607,7 +607,7 @@ export function CreateDropPage({ product }: { product: Product }) {
                 accept="image/*"
                 required={!imageDataUrl}
                 onChange={handlePictureChange}
-                className="flex-1 text-xs text-brand-mist/70 file:mr-3 file:rounded-full file:border-0 file:bg-brand-ink file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-brand-mist"
+                className="flex-1 text-xs text-brand-mist/70 file:mr-3 file:border-0 file:bg-brand-ink file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-brand-mist"
               />
             </div>
           </div>
@@ -687,7 +687,7 @@ export function CreateDropPage({ product }: { product: Product }) {
           </div>
 
           <div className="flex flex-col gap-3">
-            <span className="brand-kicker text-brand-red">{copy.yourDropsKicker}</span>
+            <span className="brand-kicker text-brand-mist/50">{copy.yourDropsKicker}</span>
 
             {activeEvents.length === 0 && (
               <p className="text-sm text-brand-mist/50">{copy.noActiveDrops}</p>
@@ -702,7 +702,7 @@ export function CreateDropPage({ product }: { product: Product }) {
                   <h3 className="truncate font-heading text-sm uppercase tracking-wide text-brand-mist">
                     {event.title}
                   </h3>
-                  <span className="whitespace-nowrap rounded-full bg-brand-ink px-2 py-0.5 text-[10px] font-medium text-brand-mist">
+                  <span className="whitespace-nowrap bg-brand-ink px-2 py-0.5 text-[10px] font-medium text-brand-mist">
                     Open
                   </span>
                 </div>
@@ -713,7 +713,7 @@ export function CreateDropPage({ product }: { product: Product }) {
                   </span>
                   <button
                     onClick={() => copyCode(event.id, event.secretCode)}
-                    className="whitespace-nowrap rounded-md border border-brand-mist/15 px-2 py-1.5 text-[11px] font-medium text-brand-mist hover:bg-brand-ink"
+                    className="pill-outline-light whitespace-nowrap px-2 py-1.5 text-[11px] font-medium"
                   >
                     {copiedId === event.id ? "Copied!" : "Copy"}
                   </button>
@@ -721,7 +721,7 @@ export function CreateDropPage({ product }: { product: Product }) {
 
                 <button
                   onClick={() => copyLink(event.id, `${origin}${claimBasePath}/${event.slug}`)}
-                  className="rounded-md border border-brand-mist/15 px-2 py-1.5 text-[11px] font-medium text-brand-mist hover:bg-brand-ink"
+                  className="pill-outline-light px-2 py-1.5 text-[11px] font-medium"
                 >
                   {copiedLinkId === event.id ? "Link copied!" : "Copy claim link"}
                 </button>
@@ -750,7 +750,7 @@ export function CreateDropPage({ product }: { product: Product }) {
                   <button
                     onClick={() => handleSupplyUpdate(event)}
                     disabled={updatingSupplyId === event.id}
-                    className="whitespace-nowrap rounded-md border border-brand-mist/15 px-2 py-1.5 text-[11px] font-medium text-brand-mist hover:bg-brand-ink disabled:opacity-50"
+                    className="pill-outline-light whitespace-nowrap px-2 py-1.5 text-[11px] font-medium disabled:opacity-50"
                   >
                     {updatingSupplyId === event.id ? "Saving…" : "Update supply"}
                   </button>
@@ -767,7 +767,7 @@ export function CreateDropPage({ product }: { product: Product }) {
                   <button
                     onClick={() => handleExtend(event.id)}
                     disabled={extendingId === event.id}
-                    className="whitespace-nowrap rounded-md border border-brand-mist/15 px-2 py-1.5 text-[11px] font-medium text-brand-mist hover:bg-brand-ink disabled:opacity-50"
+                    className="pill-outline-light whitespace-nowrap px-2 py-1.5 text-[11px] font-medium disabled:opacity-50"
                   >
                     {extendingId === event.id ? "Extending…" : "Extend"}
                   </button>
@@ -808,7 +808,7 @@ export function CreateDropPage({ product }: { product: Product }) {
                     <button
                       onClick={() => handleExtend(event.id)}
                       disabled={extendingId === event.id}
-                      className="whitespace-nowrap rounded-md border border-brand-mist/15 px-2 py-1.5 text-[11px] font-medium text-brand-mist hover:bg-brand-ink disabled:opacity-50"
+                      className="pill-outline-light whitespace-nowrap px-2 py-1.5 text-[11px] font-medium disabled:opacity-50"
                     >
                       {extendingId === event.id ? "Extending…" : "Extend"}
                     </button>
