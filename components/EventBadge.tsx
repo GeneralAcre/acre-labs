@@ -37,7 +37,7 @@ export function EventBadge({
   return (
     <div
       style={{ width: size, height: size }}
-      className={`badge-gradient flex aspect-square items-center justify-center rounded-full border border-brand-mist/30 font-heading uppercase text-brand-mist ${className}`}
+      className={`badge-gradient dark-panel flex aspect-square items-center justify-center rounded-full border border-brand-mist/30 font-heading uppercase text-brand-mist ${className}`}
     >
       <span style={{ fontSize: size * 0.32 }}>{initialsFor(title)}</span>
     </div>

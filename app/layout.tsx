@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Iceberg, Arimo, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Footer } from "@/components/Footer";
@@ -17,15 +17,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const iceberg = Iceberg({
-  weight: "400",
-  variable: "--font-iceberg",
-  subsets: ["latin"],
-});
-
-const arimo = Arimo({
-  weight: "700",
-  variable: "--font-arimo",
+const spaceGrotesk = Space_Grotesk({
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
 });
 
@@ -47,7 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${iceberg.variable} ${arimo.variable} ${inter.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background">
         <PrivyClientProvider>

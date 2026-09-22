@@ -5,21 +5,30 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* AcreLabs is a fixed dark brand experience — every component uses the
-     explicit brand-* tokens below rather than reacting to system theme. Without
-     this, browsers auto-light-theme native form controls (inputs, date pickers)
-     on a light-mode OS, which then clash with our explicitly dark surfaces. */
-  color-scheme: dark;
+  /* AcreLabs is a fixed light brand experience (editorial, f.inc-inspired) —
+     every component uses the explicit brand-* tokens below rather than
+     reacting to system theme. Without this, browsers auto-dark-theme native
+     form controls (inputs, date pickers) on a dark-mode OS, which then clash
+     with our explicitly light surfaces.
+     brand-mist and brand-ink are an always-inverted pair used throughout for
+     "panel background" + "text/mark on that panel" (e.g. PassportCard's
+     attendee strip, tooltips, code chips) — flipping both together keeps
+     every such pairing self-consistent. .dark-panel below resets both back
+     to their original dark-theme values for the handful of surfaces (hero
+     gradients, badge circles) that are always dark regardless of the site's
+     overall theme. */
+  color-scheme: light;
   --brand-red: #d80819;
-  --brand-mist: #ffffff;
-  --brand-ink: #1c1c1c;
-  --brand-surface: #141414;
-  --background: #0a0a0a;
-  --foreground: #ffffff;
-  --card: #141414;
-  --card-foreground: #ffffff;
-  --popover: #141414;
-  --popover-foreground: #ffffff;
+  --brand-blue: #0099ff;
+  --brand-mist: #111111;
+  --brand-ink: #ffffff;
+  --brand-surface: #f1f1f1;
+  --background: #f1f1f1;
+  --foreground: #111111;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
@@ -37,7 +46,9 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  /* Sharp, editorial corners sitewide — cascades through every
+     rounded-{sm,md,lg,xl,2xl,3xl,4xl} utility via the @theme block below. */
+  --radius: 0rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -52,12 +63,13 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-brand-red: var(--brand-red);
+  --color-brand-blue: var(--brand-blue);
   --color-brand-mist: var(--brand-mist);
   --color-brand-ink: var(--brand-ink);
   --color-brand-surface: var(--brand-surface);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-inter);
+  --font-heading: var(--font-space-grotesk);
   --animate-blink-cursor: blink-cursor 1.2s step-end infinite;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -109,25 +121,10 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-.brand-gradient {
-  /* Full-strength red only reads as an accent near the top edge — held past
-     the halfway point it turns the whole hero into a wall of saturated red
-     that's hard to read against (thin text, translucent inputs/pills all
-     lose contrast). Darkening quickly to a muted maroon keeps the brand
-     color as a glow instead of the whole backdrop. */
-  background: linear-gradient(
-    180deg,
-    var(--brand-red) 0%,
-    #8a0710 30%,
-    #2a0508 60%,
-    var(--background) 85%,
-    var(--background) 100%
-  );
-}
-
-/* Stays dark corner-to-corner regardless of element size, unlike
-   .brand-gradient (tuned for a tall hero) — keeps the white badge initials
-   readable at every badge size instead of landing on its pale bottom edge. */
+/* Stays dark corner-to-corner regardless of element size — keeps the white
+   badge initials readable at every badge size instead of landing on a pale
+   edge. Page heroes no longer use a gradient; this is only for badge
+   artwork. */
 .badge-gradient {
   background: linear-gradient(135deg, var(--brand-red) 0%, #5c0710 100%);
 }
@@ -139,26 +136,31 @@ body {
   text-transform: uppercase;
 }
 
+/* "Pill" is a legacy name from the rounded-button era — kept for every call
+   site's className, but sharp-cornered now to match f.inc. */
 .pill-dark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
+  border-radius: 0;
   background: var(--brand-ink);
   color: var(--brand-mist);
   transition: background-color 0.2s ease;
 }
 
 .pill-dark:hover {
-  background: #2a2a2a;
+  background: color-mix(in srgb, var(--brand-mist) 10%, var(--brand-ink));
 }
 
+/* Built from the brand-mist/ink variables (not hardcoded white) so it reads
+   correctly both on a plain light surface and inside .dark-panel, where
+   those variables are reset back to their dark-theme values. */
 .pill-outline-light {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0;
+  border: 1px solid color-mix(in srgb, var(--brand-mist) 50%, transparent);
   color: var(--brand-mist);
   transition:
     background-color 0.2s ease,
@@ -166,33 +168,33 @@ body {
 }
 
 .pill-outline-light:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--brand-mist) 12%, transparent);
 }
 
-/* Opaque, unlike .pill-outline-light — stays readable regardless of exactly
-   where it lands on .brand-gradient instead of depending on a translucent
-   border/text color matching whatever's behind it. */
+/* Opaque, unlike .pill-outline-light — stays readable regardless of what's
+   behind it instead of depending on a translucent border/text color
+   matching it. */
 .pill-light {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
+  border-radius: 0;
   background: var(--brand-mist);
   color: var(--brand-ink);
-  border: 1px solid rgba(16, 16, 16, 0.08);
+  border: 1px solid color-mix(in srgb, var(--brand-ink) 8%, transparent);
   transition: background-color 0.2s ease;
 }
 
 .pill-light:hover {
-  background: #ececec;
+  background: color-mix(in srgb, var(--brand-ink) 10%, var(--brand-mist));
 }
 
 .pill-outline-dark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
-  border: 1px solid rgba(28, 28, 28, 0.4);
+  border-radius: 0;
+  border: 1px solid color-mix(in srgb, var(--brand-ink) 40%, transparent);
   color: var(--brand-ink);
   transition:
     background-color 0.2s ease,
@@ -200,7 +202,15 @@ body {
 }
 
 .pill-outline-dark:hover {
-  background: rgba(28, 28, 28, 0.08);
+  background: color-mix(in srgb, var(--brand-ink) 8%, transparent);
+}
+
+/* Resets brand-mist/ink to their original dark-theme pairing (light text,
+   dark ink) for surfaces that are always dark regardless of the site's
+   overall theme — hero gradient bands, badge circles, and photo overlays. */
+.dark-panel {
+  --brand-mist: #ffffff;
+  --brand-ink: #1c1c1c;
 }
 
 .dark {

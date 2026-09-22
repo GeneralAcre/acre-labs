@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const projects = [
   { number: "01", name: "Badge", description: "Collect on-chain proof of the moments you showed up for.", href: "/badge", letter: "B" },
-  { number: "02", name: "Content", description: "Mint your passport — a ticket to join a hackathon, minted on-chain.", href: "/content", letter: "C" },
+  { number: "02", name: "Content", description: "Check in with your name and X handle — see who else showed up.", href: "/content", letter: "C" },
 ];
 
 export function ProjectsCarousel() {
@@ -57,7 +57,7 @@ function ProjectCard({ project }: { project: (typeof projects)[number] }) {
       <span className="mb-auto font-mono text-xs text-brand-mist/45">{project.number} / PROJECT</span>
       <h3 className="font-heading text-4xl uppercase leading-[0.85] tracking-[-0.045em] text-brand-mist sm:text-5xl">{project.name}</h3>
       <p className={`mt-3 ${isComingSoon ? "text-sm font-medium uppercase tracking-[0.18em] text-brand-red" : "max-w-sm text-sm leading-relaxed text-brand-mist/65"}`}>{project.description}</p>
-      {!isComingSoon && <span className="mt-5 text-xs font-medium uppercase tracking-[0.18em] text-brand-mist">Open project →</span>}
+      {!isComingSoon && <span className="mt-5 text-xs font-medium uppercase tracking-[0.18em] text-brand-blue">Open project →</span>}
     </CardContent>
   </Card>;
 }

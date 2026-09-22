@@ -99,7 +99,7 @@ export function WalletButton({
           {coreDetail ? (
             <button
               onClick={() => chooseWallet(coreDetail)}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-ink"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
             >
               <CoreWalletIcon />
               Core Wallet
@@ -109,7 +109,7 @@ export function WalletButton({
               href="https://core.app/tools"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-ink"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
             >
               <CoreWalletIcon />
               Core Wallet
@@ -120,7 +120,7 @@ export function WalletButton({
             <button
               key={detail.info.uuid}
               onClick={() => chooseWallet(detail)}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-ink"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
             >
               {/* EIP-6963 icons are data URIs, not external requests */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -130,7 +130,7 @@ export function WalletButton({
           ))}
           <button
             onClick={connectWithEmail}
-            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-ink"
+            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
           >
             <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-mist/10 text-xs">
               ✉
@@ -142,7 +142,7 @@ export function WalletButton({
           </p>
           <button
             onClick={closeChooser}
-            className="mt-1 w-full rounded-lg px-2 py-2 text-left text-xs text-brand-mist/50 hover:bg-brand-ink"
+            className="mt-1 w-full rounded-lg px-2 py-2 text-left text-xs text-brand-mist/50 hover:bg-brand-mist/5"
           >
             Cancel
           </button>

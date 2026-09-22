@@ -54,6 +54,19 @@ model Event {
   @@index([ownerAddress])
 }
 
+// A hackathon check-in: just a name and X handle, no wallet — for the
+// Content session's "who's here" wall.
+model CheckIn {
+  id        String   @id @default(uuid())
+  name      String
+  // Normalized (no leading "@", lowercased) so the same person can't check
+  // in twice under different casing.
+  xHandle   String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model Claim {
   id            String      @id @default(uuid())
   eventId       String

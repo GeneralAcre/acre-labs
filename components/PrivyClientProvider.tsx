@@ -16,6 +16,19 @@ export function PrivyClientProvider({ children }: { children: ReactNode }) {
         appearance: {
           theme: "dark",
           accentColor: "#d80819",
+          // Empty on purpose: external wallets (Core, MetaMask) are handled by
+          // our own EIP-6963 picker above, not Privy.
+          walletList: [],
+        },
+        // `appearance.walletList` above only reorders the login-modal buttons —
+        // it does NOT stop Privy from scanning window.ethereum and wrapping
+        // whatever it finds as an internal connector on mount. When another
+        // extension is mid-injecting or isn't a fully-conformant EIP-1193
+        // provider, that wrap throws "this.walletProvider?.on is not a
+        // function" inside Privy's SDK. This flag is what actually skips that
+        // scan (we don't use Privy for external wallets at all).
+        externalWallets: {
+          disableAllExternalWallets: true,
         },
         defaultChain: PRIVY_CHAIN,
         supportedChains: [PRIVY_CHAIN],

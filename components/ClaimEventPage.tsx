@@ -178,7 +178,7 @@ export function ClaimEventPage({
 
   if (stage === "success" && txHash && event && address) {
     return (
-      <div className="brand-gradient flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
+      <div className="bg-background flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
         <div className="flex w-full max-w-3xl flex-col items-center gap-6 text-center">
           <div className="flex flex-col gap-2">
             <span className="brand-kicker text-brand-mist/60">Success</span>
@@ -224,7 +224,7 @@ export function ClaimEventPage({
   }
 
   return (
-    <div className="brand-gradient flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
+    <div className="dark-panel bg-background flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
       <div className="w-full max-w-md rounded-3xl border border-brand-mist/10 bg-black/30 p-8 text-center shadow-[0_20px_70px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:p-10">
         <div className="flex flex-col items-center gap-6">
           {stage === "loading" && (

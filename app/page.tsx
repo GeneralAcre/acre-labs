@@ -6,7 +6,7 @@ import { TypingText } from "@/components/TypingText";
 export default function Home() {
   return (
     <>
-      <section className="relative flex min-h-[68vh] items-center overflow-hidden px-6 py-20 sm:px-10">
+      <section className="dark-panel relative flex min-h-[68vh] items-center overflow-hidden px-6 py-20 sm:px-10">
         <HeroBackground />
         <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center text-center">
           <h1 className="mt-5 font-heading text-6xl leading-[0.86] tracking-tight text-brand-mist sm:text-8xl lg:text-9xl">AcreLabs</h1>
@@ -18,8 +18,8 @@ export default function Home() {
         <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center">
           <span className="brand-kicker text-brand-mist/40">Built for</span>
           <div className="flex items-center justify-center gap-8 sm:gap-12">
-            <Image src="/trustby/Team1.png" alt="Team1" width={2054} height={578} className="h-6 w-auto opacity-75 sm:h-7" />
-            <Image src="/trustby/AvalancheLogo.png" alt="Avalanche" width={1835} height={271} className="h-5 w-auto opacity-75 sm:h-6" />
+            <Image src="/trustby/Team1.png" alt="Team1" width={2054} height={578} className="h-6 w-auto opacity-75 brightness-0 sm:h-7" />
+            <Image src="/trustby/AvalancheLogo.png" alt="Avalanche" width={1835} height={271} className="h-5 w-auto opacity-75 brightness-0 sm:h-6" />
           </div>
         </div>
       </section>

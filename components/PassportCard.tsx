@@ -49,7 +49,7 @@ export function PassportCard({
     <div
       className={`relative mx-auto grid w-full max-w-3xl overflow-hidden rounded-3xl border border-brand-mist/10 bg-brand-ink shadow-2xl shadow-black/40 sm:grid-cols-[1.3fr_1fr] ${className}`}
     >
-      <div className="relative min-h-[200px] sm:min-h-[300px]">
+      <div className="dark-panel relative min-h-[200px] sm:min-h-[300px]">
         {imageUrl ? (
           <Image src={imageUrl} alt="" fill unoptimized className="object-cover" />
         ) : (

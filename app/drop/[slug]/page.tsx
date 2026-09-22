@@ -92,7 +92,7 @@ export default function DropDetailPage({
     <div className="flex flex-1 flex-col">
       {/* Short decorative banner — the badge card and content below float over
           it via negative margin, same pattern as the claim-receipt page. */}
-      <div className="brand-gradient h-40 sm:h-48" />
+      <div className="bg-background h-40 sm:h-48" />
 
       <div className="mx-auto -mt-28 w-full max-w-5xl flex-1 px-4 pb-16 sm:-mt-32">
         <Link

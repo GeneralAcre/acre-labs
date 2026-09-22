@@ -6,16 +6,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WalletButton } from "./WalletButton";
 
-// Claim and Create are the two routes each product owns separately
-// (Content's own /content/claim and /content/create); Collection and Profile
-// are a wallet's unified "everything I own", shared across both products.
-function navLinksFor(pathname: string) {
-  const inContent = pathname.startsWith("/content");
+// Content is just a name+X check-in session with its own page — Claim and
+// Create Drop below are Badge's wallet-based mint flow.
+function navLinks() {
   return [
-    { href: inContent ? "/content/claim" : "/claim", label: "Claim" },
+    { href: "/claim", label: "Claim" },
     { href: "/collection", label: "Collection" },
     { href: "/profile", label: "Profile" },
-    { href: inContent ? "/content/create" : "/create", label: inContent ? "Host" : "Create Drop" },
+    { href: "/create", label: "Create Drop" },
   ];
 }
 
@@ -42,7 +40,7 @@ export function Header() {
 
   if (pathname === "/") return null;
 
-  const navLinks = navLinksFor(pathname);
+  const links = navLinks();
 
   return (
     <header className="relative z-20 w-full border-b border-brand-mist/10 bg-brand-surface text-brand-mist">
@@ -54,14 +52,14 @@ export function Header() {
             width={43}
             height={79}
             priority
-            className="h-8 w-auto sm:h-9"
+            className="h-8 w-auto brightness-0 sm:h-9"
           />
         </Link>
 
         <div className="hidden items-center gap-6 sm:flex">
           <nav className="flex items-center gap-6 text-xs font-medium uppercase tracking-[0.2em]">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="transition-opacity hover:opacity-60">
+            {links.map((link) => (
+              <Link key={link.href} href={link.href} className="transition-colors hover:text-brand-blue">
                 {link.label}
               </Link>
             ))}
@@ -92,7 +90,7 @@ export function Header() {
                 alt="AcreLabs"
                 width={43}
                 height={79}
-                className="h-8 w-auto"
+                className="h-8 w-auto brightness-0"
               />
             </Link>
             <button
@@ -105,7 +103,7 @@ export function Header() {
           </div>
 
           <nav className="flex flex-1 flex-col items-center justify-center gap-2 px-6">
-            {navLinks.map((link) => (
+            {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

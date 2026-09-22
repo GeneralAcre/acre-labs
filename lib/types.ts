@@ -56,3 +56,12 @@ export interface CollectedClaim {
   claimedAt: number;
   event: PublicEvent;
 }
+
+// A hackathon check-in for the Content session's "who's here" wall — just a
+// name and X handle, no wallet involved.
+export interface CheckInRecord {
+  id: string;
+  name: string;
+  xHandle: string;
+  createdAt: number;
+}

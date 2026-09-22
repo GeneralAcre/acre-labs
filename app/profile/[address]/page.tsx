@@ -142,7 +142,7 @@ export default function ProfilePage({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="brand-gradient relative pt-16 pb-14">
+      <div className="bg-background relative pt-16 pb-14">
         <Link
           href="/collection"
           className="absolute left-4 top-6 inline-flex items-center gap-1 text-xs font-medium text-brand-mist/70 hover:text-brand-mist"
