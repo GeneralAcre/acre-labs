@@ -137,9 +137,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     // login modal leaves the previous wallet connected instead of dropping
     // the user to a disconnected state.
     setSwitchingToEmail(true);
-    // Specify email here as well as in the provider config so this action
-    // remains email-only if the global Privy login configuration changes.
-    privy.login({ loginMethods: ["email"] });
+    // Specified here as well as in the provider config so this action keeps
+    // offering exactly email + Google if the global Privy config changes.
+    privy.login({ loginMethods: ["email", "google"] });
   }, [privy]);
 
   const closeChooser = useCallback(() => setChooserOpen(false), []);
@@ -239,7 +239,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setAddress(embedded.address);
         setProvider(ethProvider);
-        setProviderName("Email");
+        setProviderName(privy.user?.google ? "Google" : "Email");
         setIsPrivySession(true);
       } catch {
         if (!cancelled) setError("Failed to connect the embedded wallet.");

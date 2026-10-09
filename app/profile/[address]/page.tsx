@@ -9,6 +9,7 @@ import { EventBadge } from "@/components/EventBadge";
 import { useWallet } from "@/components/WalletProvider";
 import { MyBadgeCodes } from "@/components/MyBadgeCodes";
 import { ProfileEditor } from "@/components/ProfileEditor";
+import { ProfileMemberCards } from "@/components/ProfileMemberCards";
 
 function shortenAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -141,10 +142,11 @@ export default function ProfilePage({
   // address doesn't. Falls back to the address for everyone else, and for
   // "me" whenever the connection isn't a Privy/email session.
   // A name the wallet set itself (Profile) always wins, for everyone viewing.
-  const isEmailName = isMe && providerName === "Email" && !!privy.user?.email?.address;
+  const privyEmail = privy.user?.email?.address ?? privy.user?.google?.email ?? null;
+  const isEmailName = isMe && (providerName === "Email" || providerName === "Google") && !!privyEmail;
   const hasName = !!profile?.displayName || isEmailName;
   const displayName =
-    profile?.displayName ?? (isEmailName ? privy.user!.email!.address! : shortenAddress(routeAddress));
+    profile?.displayName ?? (isEmailName && privyEmail ? privyEmail : shortenAddress(routeAddress));
 
   const earliestClaimedAt = useMemo(
     () => (claims.length ? Math.min(...claims.map((c) => c.claimedAt)) : null),
@@ -308,6 +310,8 @@ export default function ProfilePage({
       </div>
 
       {isMe && <MyBadgeCodes />}
+
+      <ProfileMemberCards xHandle={profile?.xHandle ?? null} isMe={isMe} />
 
       <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-10 sm:px-6">
         {stage === "loading" && (

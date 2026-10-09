@@ -1,6 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { toPng } from "html-to-image";
+import { Download, ExternalLink, X } from "lucide-react";
 import { Identicon } from "./Identicon";
 import { DEFAULT_ACCENT_COLOR, DEFAULT_CARD_COLOR, readableTextOn } from "@/lib/color";
 import { memberIdLabel } from "@/lib/memberId";
@@ -233,13 +236,125 @@ export function MemberCard({
     return <div className={frame}>{body}</div>;
   }
   return (
-    <a
-      href={`https://x.com/${xHandle}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`${frame} rounded-xl transition-transform duration-200 hover:-translate-y-0.5`}
-    >
-      {body}
-    </a>
+    <CardViewer body={body} fileName={`${number}-${xHandle}`} xHandle={xHandle} frameClassName={frame} />
+  );
+}
+
+// A real (non-preview) card is clickable: it opens large in a dialog where it
+// can be downloaded as a PNG or followed through to the member's X profile.
+function CardViewer({
+  body,
+  fileName,
+  xHandle,
+  frameClassName,
+}: {
+  body: ReactNode;
+  fileName: string;
+  xHandle: string;
+  frameClassName: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const captureRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  async function download() {
+    if (!captureRef.current) return;
+    setError(null);
+    setDownloading(true);
+    try {
+      // 3x pixel ratio for a crisp, print-friendly image.
+      const dataUrl = await toPng(captureRef.current, { pixelRatio: 3, cacheBust: true });
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `${fileName}.png`;
+      link.click();
+    } catch {
+      setError("Couldn't create the image. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return (
+    <>
+      {/* A div with button semantics: the card contains block elements,
+          which aren't valid inside a real <button>. */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
+        aria-label="Open member card"
+        className={`${frameClassName} cursor-pointer rounded-xl transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white`}
+      >
+        {body}
+      </div>
+
+      {open &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Member card"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+          >
+            <div className="flex w-full max-w-2xl flex-col gap-4" onClick={(event) => event.stopPropagation()}>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close"
+                  className="flex size-9 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white/80 transition-colors hover:text-white"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              <div ref={captureRef} className="w-full [container-type:inline-size]">
+                {body}
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button type="button" onClick={download} disabled={downloading} className="pill-light h-11 gap-2 px-5 text-sm disabled:opacity-50">
+                  <Download className="size-4" />
+                  {downloading ? "Preparing…" : "Download PNG"}
+                </button>
+                <a
+                  href={`https://x.com/${xHandle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pill-outline-light h-11 gap-2 bg-black/40 px-5 text-sm font-semibold"
+                >
+                  <ExternalLink className="size-4" />
+                  View @{xHandle} on X
+                </a>
+              </div>
+              {error && <p className="text-center text-sm text-brand-red">{error}</p>}
+            </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }

@@ -208,7 +208,7 @@ export function WalletButton({
             <span className="flex h-5 w-5 items-center justify-center rounded bg-secondary text-xs">
               ✉
             </span>
-            Continue with Email
+            Continue with Email or Google
           </button>
           <p className="px-2 pt-1 text-[10px] text-muted-foreground/70">
             No wallet? We&apos;ll create one for you.

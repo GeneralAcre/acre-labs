@@ -14,8 +14,9 @@ const MAX_AVATAR_BYTES = 512 * 1024;
 // X handles are 1-15 characters, letters/digits/underscore.
 const HANDLE_RE = /^[A-Za-z0-9_]{1,15}$/;
 const IMAGE_DATA_URL_RE = /^data:image\/(png|jpeg|webp|gif);base64,/;
-// Paths under /content that are real routes, not community slugs.
-const RESERVED_SLUGS = new Set(["claim", "create", "new"]);
+// Slugs that would collide with real routes: /content/* pages and
+// /api/communities/cards.
+const RESERVED_SLUGS = new Set(["claim", "create", "new", "cards"]);
 
 // Case-insensitive and tolerant of a leading "@" so "@Acre" and "acre" collide.
 export function normalizeXHandle(raw: string): string {
@@ -218,4 +219,29 @@ export async function joinCommunity(
     }
     throw err;
   }
+}
+
+// Every member card made with this X handle, across all communities, with the
+// community template each one renders in — shown on the profile of the wallet
+// whose profile links that handle.
+export async function listCardsByHandle(rawHandle: string): Promise<{ community: CommunityRecord; member: CheckInRecord }[]> {
+  const xHandle = normalizeXHandle(rawHandle);
+  if (!HANDLE_RE.test(xHandle)) return [];
+
+  const rows = await prisma.checkIn.findMany({
+    where: { xHandle },
+    include: { community: { include: withCount } },
+    orderBy: { createdAt: "desc" },
+  });
+  if (rows.length === 0) return [];
+
+  const communities = await toCommunityRecords(rows.map((row) => row.community));
+  return Promise.all(
+    rows.map(async (row, i) => {
+      const memberNo = await prisma.checkIn.count({
+        where: { communityId: row.communityId, createdAt: { lte: row.createdAt } },
+      });
+      return { community: communities[i], member: toCheckInRecord(row, memberNo) };
+    })
+  );
 }
