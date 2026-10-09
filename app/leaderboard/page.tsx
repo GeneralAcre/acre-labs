@@ -108,7 +108,7 @@ export default function LeaderboardPage() {
                 </div>
                 <Identicon tone="dark" address={mine.address} size={56} className="shrink-0" />
                 <div className="min-w-0">
-                  <p className="truncate text-lg font-semibold">{nameOf(mine)}</p>
+                  <p className="text-lg font-semibold [overflow-wrap:anywhere]">{nameOf(mine)}</p>
                   <div className="mt-2">
                     <LevelMark name={mine.name} level={mine.level} size="sm" />
                   </div>
@@ -172,7 +172,7 @@ export default function LeaderboardPage() {
                       className={i === 0 ? "shadow-[0_0_0_4px_rgba(246,198,91,.07)] ring-1 ring-amber-300/45" : ""}
                     />
                     <div className="min-w-0">
-                      <p className="truncate text-base font-semibold sm:text-lg">{nameOf(entry)}</p>
+                      <p className="text-base font-semibold [overflow-wrap:anywhere] sm:text-lg">{nameOf(entry)}</p>
                       <div className="mt-2">
                         <LevelMark name={entry.name} level={entry.level} size="sm" />
                       </div>
@@ -241,15 +241,15 @@ export default function LeaderboardPage() {
                 <div className="flex min-w-0 items-center gap-3">
                   <Identicon tone="dark" address={entry.address} size={44} className="shrink-0" />
                   <div className="min-w-0">
-                    <p className="flex items-center gap-2 truncate text-sm font-semibold sm:text-base">
-                      <span className="truncate">{nameOf(entry)}</span>
+                    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold sm:text-base">
+                      <span className="min-w-0 [overflow-wrap:anywhere]">{nameOf(entry)}</span>
                       {isMine && <span className="rounded bg-[#3c83f6]/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-[#93c5fd]">You</span>}
                     </p>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    <p className="mt-0.5 text-xs text-muted-foreground [overflow-wrap:anywhere]">
                       {entry.xHandle ? `@${entry.xHandle}` : shortenAddress(entry.address)}
                       {entry.memberCards > 0 && ` · ${entry.memberCards} member card${entry.memberCards === 1 ? "" : "s"}`}
                     </p>
-                    <p className="mt-0.5 truncate text-[10px] text-muted-foreground sm:hidden">
+                    <p className="mt-0.5 text-[10px] text-muted-foreground [overflow-wrap:anywhere] sm:hidden">
                       {entry.name} · {entry.badges} badge{entry.badges === 1 ? "" : "s"}
                     </p>
                   </div>

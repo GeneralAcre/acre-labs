@@ -91,11 +91,11 @@ export function HoldersTable({ eventId, contractAddress }: { eventId: string; co
                 <Link href={`/profile/${holder.address}`} className="flex min-w-0 items-center gap-3 hover:underline">
                   <Identicon address={holder.address} size={32} tone="dark" />
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-foreground">
+                    <span className="block text-sm font-medium text-foreground [overflow-wrap:anywhere]">
                       {holder.displayName ?? shortenAddress(holder.address)}
                     </span>
                     {holder.displayName && (
-                      <span className="block truncate font-mono text-[11px] text-muted-foreground">{shortenAddress(holder.address)}</span>
+                      <span className="block font-mono text-[11px] text-muted-foreground">{shortenAddress(holder.address)}</span>
                     )}
                     <span className="block text-[11px] text-muted-foreground sm:hidden">
                       #{holder.tokenId} · {formatDate(holder.mintedAt)}

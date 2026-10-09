@@ -105,7 +105,7 @@ export function MyBadgeCodes() {
                 <div className="flex items-center gap-3">
                   <EventBadge title={event.title} imageUrl={event.imageUrl} size={44} className="shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-sm font-semibold text-foreground">{event.title}</h3>
+                    <h3 className="text-sm font-semibold text-foreground [overflow-wrap:anywhere]">{event.title}</h3>
                     <p className="text-[11px] text-muted-foreground">
                       {event.claimedCount}
                       {typeof event.maxSupply === "number" ? ` / ${event.maxSupply}` : ""} claimed ·{" "}

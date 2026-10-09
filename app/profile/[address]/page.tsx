@@ -224,26 +224,25 @@ export default function ProfilePage({
   return (
     <div className="flex flex-1 flex-col">
       <div className="px-4 pt-5 sm:px-6 sm:pt-6">
-        <div className="relative isolate mx-auto flex w-full max-w-[1400px] flex-col items-start overflow-hidden rounded-2xl border border-border bg-card px-5 py-8 text-left sm:px-8 sm:py-10">
+        <div className="relative isolate mx-auto flex w-full max-w-[1400px] flex-col items-start overflow-hidden rounded-2xl border border-border bg-card px-4 py-5 text-left sm:px-8 sm:py-10">
           <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_90%_0%,rgba(60,131,246,0.16),transparent_55%)]" />
-          <div className="flex w-full flex-col gap-6 sm:flex-row sm:items-center">
-
-
+          {/* Avatar sits left of the name at every size — smaller on phones. */}
+          <div className="flex w-full items-start gap-4 sm:items-center sm:gap-6">
             <div
               aria-hidden="true"
-              className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-border bg-card font-heading font-bold text-2xl tracking-tight text-foreground"
+              className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-border bg-card font-heading text-lg font-bold tracking-tight text-foreground sm:size-20 sm:rounded-2xl sm:text-2xl"
             >
               {routeAddress.slice(2, 4)}
             </div>
 
-            <div className="flex flex-1 flex-col items-start gap-2">
+            <div className="flex min-w-0 max-w-full flex-1 flex-col items-start gap-2">
               <span className="brand-kicker text-muted-foreground">
                 {isMe ? "Your Wallet" : "Collection"}
               </span>
 
               {hasName ? (
                 <>
-                  <h1 className="font-heading font-bold text-4xl leading-none tracking-tight text-foreground">
+                  <h1 className="font-heading font-bold text-2xl leading-tight tracking-tight text-foreground [overflow-wrap:anywhere] sm:text-4xl">
                     {displayName}
                   </h1>
                   <button
@@ -261,7 +260,7 @@ export default function ProfilePage({
                   title="Copy full address"
                   className="group flex items-center gap-2"
                 >
-                  <h1 className="font-heading font-bold text-4xl leading-none tracking-tight text-foreground">
+                  <h1 className="font-heading font-bold text-2xl leading-tight tracking-tight text-foreground [overflow-wrap:anywhere] sm:text-4xl">
                     {displayName}
                   </h1>
                   <span className="text-muted-foreground/70 group-hover:text-foreground">
@@ -286,7 +285,7 @@ export default function ProfilePage({
           </div>
 
           {stage === "ready" && (
-            <div className="mt-8 grid w-full grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+            <div className="mt-5 grid w-full grid-cols-2 gap-2.5 sm:mt-8 sm:grid-cols-4 sm:gap-3">
               <StatCard label="Badges" value={String(claims.length)} />
               <StatCard
                 label="Member Since"
@@ -361,7 +360,7 @@ export default function ProfilePage({
                   >
                     <EventBadge title={claim.event.title} imageUrl={claim.event.imageUrl} size={40} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
+                      <p className="text-sm font-medium text-foreground [overflow-wrap:anywhere]">
                         {claim.event.title}
                       </p>
                       <p className="text-xs text-muted-foreground">{formatDate(claim.claimedAt)}</p>

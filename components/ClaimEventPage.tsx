@@ -427,7 +427,7 @@ function ClosedBadge({ event, soldOut }: { event: PublicEventWithSupply; soldOut
               {details.map((item) => (
                 <div key={item.label} className="min-w-0">
                   <dt className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">{item.label}</dt>
-                  <dd className="mt-1 truncate text-sm text-foreground">{item.value}</dd>
+                  <dd className="mt-1 break-words text-sm text-foreground">{item.value}</dd>
                 </div>
               ))}
             </dl>

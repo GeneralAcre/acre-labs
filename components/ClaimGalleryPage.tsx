@@ -148,13 +148,18 @@ export function ClaimGalleryPage({ product, showHero = true }: { product: Produc
                   title={event.title}
                   className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-foreground/20"
                 >
-                  <div className="relative flex aspect-square items-center justify-center bg-[radial-gradient(circle_at_50%_40%,#1f1f1f,#0a0a0a_75%)] p-6">
-                    <EventBadge
-                      title={event.title}
-                      imageUrl={event.imageUrl}
-                      size={220}
-                      className="!h-full !w-full shadow-2xl shadow-black/60 transition-transform duration-300 group-hover:scale-[1.03]"
-                    />
+                  <div className="relative aspect-square bg-[radial-gradient(circle_at_50%_40%,#1f1f1f,#0a0a0a_75%)]">
+                    {/* Pinned to an exact box (not flex-centered): Safari won't
+                        shrink a flex-item <img> below its intrinsic width, which
+                        made the art spill out of narrow mobile tiles. */}
+                    <div className="absolute inset-[14%]">
+                      <EventBadge
+                        title={event.title}
+                        imageUrl={event.imageUrl}
+                        size={220}
+                        className="!h-full !w-full shadow-2xl shadow-black/60 transition-transform duration-300 group-hover:scale-[1.03]"
+                      />
+                    </div>
                     <span
                       className={`absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                         closed ? "bg-brand-red text-white" : "bg-[#21c45d]/15 text-[#21c45d]"
@@ -164,7 +169,7 @@ export function ClaimGalleryPage({ product, showHero = true }: { product: Produc
                     </span>
                   </div>
                   <div className="flex flex-1 flex-col gap-1 border-t border-border p-3">
-                    <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">{event.title}</h3>
+                    <h3 className="break-words text-sm font-semibold leading-snug text-foreground">{event.title}</h3>
                     <p className="text-xs text-muted-foreground">
                       {event.location ? `${event.location} · ` : ""}
                       {formatDate(event.eventEndTime)}

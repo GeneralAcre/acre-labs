@@ -74,8 +74,8 @@ export function CommunityList() {
                 </div>
               )}
               <div className="min-w-0">
-                <h2 className="truncate text-base font-semibold text-foreground">{community.name}</h2>
-                <p className="truncate text-xs text-muted-foreground">Created by {community.creatorName}</p>
+                <h2 className="text-base font-semibold text-foreground [overflow-wrap:anywhere]">{community.name}</h2>
+                <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">Created by {community.creatorName}</p>
               </div>
             </div>
             {community.description && (

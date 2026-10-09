@@ -277,7 +277,7 @@ export function CreateDropPage({ product }: { product: Product }) {
           <div className="flex min-w-0 flex-1 items-center gap-4">
             <EventBadge title={created.title} imageUrl={created.imageUrl} size={56} className="shrink-0" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">&ldquo;{created.title}&rdquo; is live</p>
+              <p className="text-sm font-semibold text-foreground [overflow-wrap:anywhere]">&ldquo;{created.title}&rdquo; is live</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Share the claim code with attendees. Manage supply and deadline anytime from your profile.
               </p>
