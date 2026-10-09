@@ -41,11 +41,39 @@ function Barcode({ seed }: { seed: string }) {
   );
 }
 
+// Each field column is ~22cqw wide, so longer values step down in size (and
+// may wrap to a second line) instead of being cut off with an ellipsis.
+function fieldSize(value: string): string {
+  const length = value.length;
+  if (length <= 9) return "4.2cqw";
+  if (length <= 12) return "3.4cqw";
+  if (length <= 16) return "2.7cqw";
+  if (length <= 28) return "2.3cqw";
+  return "1.9cqw";
+}
+
+// Same idea for the headline, which spans the whole right column. Its
+// padding leaves room for the italic slant and drop shadow, which would
+// otherwise be clipped by line-clamp's overflow-hidden.
+function headlineSize(name: string): string {
+  const length = name.length;
+  if (length <= 12) return "6.4cqw";
+  if (length <= 18) return "5.2cqw";
+  if (length <= 26) return "4.6cqw";
+  if (length <= 40) return "4cqw";
+  return "3.2cqw";
+}
+
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-[2.1cqw] font-semibold uppercase leading-none tracking-wide">{label}:</p>
-      <p className="mt-[0.6cqw] truncate font-serif text-[4.2cqw] uppercase leading-none tracking-tight">{value}</p>
+      <p
+        className="mt-[0.6cqw] line-clamp-2 break-words font-serif uppercase leading-[1.05] tracking-tight"
+        style={{ fontSize: fieldSize(value) }}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -60,6 +88,7 @@ export function MemberCard({
   id,
   memberNo,
   communityName,
+  communityLogo = null,
   name,
   xHandle,
   avatarUrl,
@@ -75,6 +104,8 @@ export function MemberCard({
   // Join position in the community; rendered as e.g. "TE-0001".
   memberNo: number;
   communityName: string;
+  // Optional logo shown bare (no frame) beside the headline.
+  communityLogo?: string | null;
   name: string;
   xHandle: string;
   avatarUrl: string | null;
@@ -125,9 +156,13 @@ export function MemberCard({
             member id card
           </p>
           <div className="mt-[1cqw] flex min-w-0 items-center gap-[1.8cqw]">
+            {communityLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element -- creator-uploaded data: URI
+              <img src={communityLogo} alt="" className="h-[9cqw] w-auto max-w-[14cqw] shrink-0 object-contain" />
+            ) : null}
             <p
-              className="line-clamp-2 min-w-0 text-[6.4cqw] font-black uppercase italic leading-[0.9] tracking-tight"
-              style={{ color: accentColor, textShadow: `0.25cqw 0.25cqw 0 ${ink}` }}
+              className="line-clamp-2 min-w-0 break-words pb-[0.4cqw] pr-[1.4cqw] font-black uppercase italic leading-[0.95] tracking-tight"
+              style={{ fontSize: headlineSize(communityName), color: accentColor, textShadow: `0.25cqw 0.25cqw 0 ${ink}` }}
             >
               {communityName}
             </p>

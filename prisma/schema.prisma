@@ -84,10 +84,7 @@ model Community {
 // wallet involved.
 model CheckIn {
   id          String    @id @default(uuid())
-  // Defaults to the original Team1 Thailand community (seeded by the
-  // add_communities migration) so rows created before communities existed —
-  // and any deploy still running the old single-wall code — land there.
-  communityId String    @default("team1-thailand")
+  communityId String
   name        String
   // Normalized (no leading "@", lowercased) so the same person can't join
   // the same community twice under different casing.

@@ -403,7 +403,7 @@ function ClosedBadge({ event, soldOut }: { event: PublicEventWithSupply; soldOut
     <main className="relative isolate flex-1 bg-background px-4 py-8 sm:px-6 sm:py-10">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(ellipse_at_50%_0%,rgba(60,131,246,0.14),transparent_65%)]" />
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <Link href="/badge" className="pill-outline-light inline-flex h-10 w-fit items-center px-4 text-sm font-medium">All badges</Link>
+        <Link href="/badge" className="pill-outline-light inline-flex h-10 w-fit items-center px-4 text-sm font-medium">Back</Link>
 
         <section className="grid overflow-hidden rounded-2xl border border-border bg-card md:grid-cols-[300px_minmax(0,1fr)]">
           <div className="flex items-center justify-center bg-[radial-gradient(circle_at_50%_40%,#1f1f1f,#0a0a0a_75%)] p-8">

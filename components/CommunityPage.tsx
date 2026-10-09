@@ -154,6 +154,7 @@ export function CommunityPage({ slug }: { slug: string }) {
               id={myCard.id}
               memberNo={myCard.memberNo}
               communityName={community.name}
+              communityLogo={community.imageUrl}
               cardColor={community.cardColor}
               accentColor={community.accentColor}
               issuedAt={community.issueDate}
@@ -170,6 +171,7 @@ export function CommunityPage({ slug }: { slug: string }) {
               id={`preview-${community.id}`}
               memberNo={members.length + 1}
               communityName={community.name}
+              communityLogo={community.imageUrl}
               cardColor={community.cardColor}
               accentColor={community.accentColor}
               issuedAt={community.issueDate}
@@ -280,6 +282,7 @@ export function CommunityPage({ slug }: { slug: string }) {
                 id={member.id}
                 memberNo={member.memberNo}
                 communityName={community.name}
+                communityLogo={community.imageUrl}
                 cardColor={community.cardColor}
                 accentColor={community.accentColor}
                 issuedAt={community.issueDate}

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/WalletProvider";
 import { MemberCard } from "@/components/MemberCard";
 import { useOwnerSession } from "@/lib/useOwnerSession";
+import { compressSquareImage } from "@/lib/image";
 import { DEFAULT_ACCENT_COLOR, DEFAULT_CARD_COLOR } from "@/lib/color";
 
 // Starting points for the card template — same layout, different colors,
@@ -36,9 +37,21 @@ export function CreateCommunityForm() {
   const [cardColor, setCardColor] = useState(DEFAULT_CARD_COLOR);
   const [accentColor, setAccentColor] = useState(DEFAULT_ACCENT_COLOR);
   const [issueDate, setIssueDate] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewDate] = useState(() => Date.now());
+
+  async function handleLogo(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    try {
+      setImageUrl(await compressSquareImage(file, 512));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't use that image.");
+    }
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -48,7 +61,7 @@ export function CreateCommunityForm() {
       const res = await fetch("/api/communities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, cardColor, accentColor, issueDate }),
+        body: JSON.stringify({ name, description, cardColor, accentColor, issueDate, imageUrl: imageUrl || undefined }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
@@ -106,6 +119,34 @@ export function CreateCommunityForm() {
             placeholder="What's this community about?"
             className="font-normal normal-case tracking-normal resize-none rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:border-white/40 focus:outline-none sm:text-sm"
           />
+        </label>
+
+        <label className={labelClass}>
+          <span>
+            Logo{" "}
+            <span className="font-normal normal-case tracking-normal text-muted-foreground/70">
+              Optional · shown next to the name on every card — a transparent PNG looks best
+            </span>
+          </span>
+          <span className="flex items-center gap-4 rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3">
+            {imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- local data: URI preview
+              <img src={imageUrl} alt="" className="size-10 object-contain" />
+            ) : (
+              <span className="size-10 rounded-lg bg-white/[0.06]" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogo}
+              className="min-w-0 flex-1 text-xs font-normal normal-case tracking-normal text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
+            />
+            {imageUrl && (
+              <button type="button" onClick={() => setImageUrl("")} className="text-xs font-normal normal-case tracking-normal text-muted-foreground hover:text-foreground">
+                Remove
+              </button>
+            )}
+          </span>
         </label>
 
         <label className={labelClass}>
@@ -174,6 +215,7 @@ export function CreateCommunityForm() {
           id="community-preview"
           memberNo={1}
           communityName={name.trim() || "Your community"}
+          communityLogo={imageUrl || null}
           name="Member name"
           xHandle="member"
           avatarUrl={null}

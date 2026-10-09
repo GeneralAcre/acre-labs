@@ -54,6 +54,7 @@ export function CommunityList() {
                 id={`template-${community.id}`}
                 memberNo={1}
                 communityName={community.name}
+                communityLogo={community.imageUrl}
                 cardColor={community.cardColor}
                 accentColor={community.accentColor}
                 issuedAt={community.issueDate}
