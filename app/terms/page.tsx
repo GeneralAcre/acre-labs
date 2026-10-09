@@ -5,20 +5,20 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-16">
-      <span className="brand-kicker text-brand-red">Legal</span>
-      <h1 className="mt-3 font-heading text-3xl uppercase tracking-tight text-brand-mist">
+      <span className="brand-kicker text-muted-foreground">Legal</span>
+      <h1 className="mt-3 font-heading font-bold text-3xl tracking-tight text-foreground">
         Terms of Use
       </h1>
-      <p className="mt-2 text-xs text-brand-mist/50">Last updated: 2026-07-31</p>
+      <p className="mt-2 text-xs text-muted-foreground">Last updated: 2026-07-31</p>
 
-      <div className="mt-8 flex flex-col gap-6 text-sm leading-relaxed text-brand-mist/80">
+      <div className="mt-8 flex flex-col gap-6 text-sm leading-relaxed text-muted-foreground">
         <p>
           AcreLabs is a demo application for claiming event-attendance NFTs on
           Avalanche. By using it, you agree to the following.
         </p>
 
         <section>
-          <h2 className="font-heading text-lg uppercase tracking-tight text-brand-mist">
+          <h2 className="font-heading font-bold text-lg tracking-tight text-foreground">
             What AcreLabs Does
           </h2>
           <p className="mt-2">
@@ -34,7 +34,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="font-heading text-lg uppercase tracking-tight text-brand-mist">
+          <h2 className="font-heading font-bold text-lg tracking-tight text-foreground">
             Email Sign-In
           </h2>
           <p className="mt-2">
@@ -45,7 +45,7 @@ export default function TermsPage() {
               href="https://www.privy.io/privacy-policy"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline hover:text-brand-mist"
+              className="underline hover:text-foreground"
             >
               privacy policy
             </a>{" "}
@@ -55,7 +55,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="font-heading text-lg uppercase tracking-tight text-brand-mist">
+          <h2 className="font-heading font-bold text-lg tracking-tight text-foreground">
             No Guarantees
           </h2>
           <p className="mt-2">
@@ -67,7 +67,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="font-heading text-lg uppercase tracking-tight text-brand-mist">
+          <h2 className="font-heading font-bold text-lg tracking-tight text-foreground">
             On-Chain Activity Is Public
           </h2>
           <p className="mt-2">
@@ -79,7 +79,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="font-heading text-lg uppercase tracking-tight text-brand-mist">
+          <h2 className="font-heading font-bold text-lg tracking-tight text-foreground">
             Acceptable Use
           </h2>
           <p className="mt-2">

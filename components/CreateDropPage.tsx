@@ -5,10 +5,11 @@ import Link from "next/link";
 import type { EventRecord, Product } from "@/lib/types";
 import { EventBadge } from "@/components/EventBadge";
 import { useWallet } from "@/components/WalletProvider";
-import { signMessage, Web3ClaimError } from "@/lib/web3/wallet";
-import { signInMessage } from "@/lib/authMessage";
+import { Web3ClaimError } from "@/lib/web3/wallet";
 import { useOrigin } from "@/lib/useOrigin";
 import { useNow } from "@/lib/useNow";
+import { useOwnerSession } from "@/lib/useOwnerSession";
+import { compressSquareImage } from "@/lib/image";
 import { deployDropContract } from "@/lib/web3/factory";
 import { DROP_FACTORY_ADDRESS } from "@/lib/web3/chains";
 
@@ -35,19 +36,19 @@ const COPY: Record<
   }
 > = {
   badge: {
-    newDropKicker: "[ 01 ] New Drop",
-    heading: "Create a Drop",
+    newDropKicker: "New Badge",
+    heading: "Create a Badge",
     pictureLabel: "Badge Picture",
-    yourDropsKicker: "[ 02 ] Your Drops",
-    noActiveDrops: "No active drops.",
-    connectSubtext: "Manage the drops you create.",
-    submitLabel: "Create drop",
+    yourDropsKicker: "Your Badges",
+    noActiveDrops: "No active badges.",
+    connectSubtext: "Manage the badges you create.",
+    submitLabel: "Create badge",
   },
   content: {
-    newDropKicker: "[ 01 ] New Pass",
+    newDropKicker: "New Pass",
     heading: "Host a Hackathon",
     pictureLabel: "Pass Artwork",
-    yourDropsKicker: "[ 02 ] Your Hackathons",
+    yourDropsKicker: "Your Hackathons",
     noActiveDrops: "No active hackathons.",
     connectSubtext: "Manage the hackathons you host.",
     submitLabel: "Create pass",
@@ -71,118 +72,15 @@ function endOfDayTimestamp(dateString: string): number | null {
   return Number.isNaN(ms) ? null : ms;
 }
 
-const BADGE_MAX_DIMENSION = 512;
-const BADGE_SOURCE_MAX_BYTES = 20 * 1024 * 1024; // guards against hanging on a huge decode
-const BADGE_ALPHA_THRESHOLD = 16; // ignore near-invisible anti-aliased edge pixels when finding art bounds
-
-// Many badge/sticker exports (POAP-style PNGs) sit on a transparent canvas
-// that's noticeably larger than the circular artwork itself. Scans the pixel
-// alpha channel to find the bounding box of the actual (non-transparent)
-// artwork, so we can crop to that instead of the full transparent canvas.
-function findOpaqueBounds(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-): { left: number; top: number; right: number; bottom: number } {
-  const { data } = ctx.getImageData(0, 0, width, height);
-  let left = width;
-  let right = -1;
-  let top = height;
-  let bottom = -1;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const alpha = data[(y * width + x) * 4 + 3];
-      if (alpha > BADGE_ALPHA_THRESHOLD) {
-        if (x < left) left = x;
-        if (x > right) right = x;
-        if (y < top) top = y;
-        if (y > bottom) bottom = y;
-      }
-    }
-  }
-  // Fully transparent image (nothing to trim) — fall back to the full canvas.
-  if (right < left || bottom < top) {
-    return { left: 0, top: 0, right: width - 1, bottom: height - 1 };
-  }
-  return { left, top, right, bottom };
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
-// Badge images are embedded directly in the on-chain metadata JSON that
-// wallets fetch via tokenURI — an uncompressed phone photo (several MB) can
-// be slow enough to fetch/render that some wallets time out and show the
-// badge as blank. Resizing + re-encoding client-side keeps the payload small
-// regardless of what the organizer uploads.
-//
-// The badge is always displayed in a circular 1:1 frame (see EventBadge), so
-// this crops to a square around the actual artwork (trimming any transparent
-// padding baked into the source file first — see findOpaqueBounds) and
-// re-encodes as PNG. JPEG has no alpha channel, so any transparent pixels
-// left in frame get flattened to opaque black on encode, which is what
-// turned a slim transparent margin into a visible black ring inside the
-// circular frame.
-async function compressBadgeImage(file: File): Promise<string> {
-  if (file.size > BADGE_SOURCE_MAX_BYTES) {
-    throw new Error("Image is too large. Please choose a file under 20MB.");
-  }
-
-  const bitmap = await createImageBitmap(file);
-
-  const probe = document.createElement("canvas");
-  probe.width = bitmap.width;
-  probe.height = bitmap.height;
-  const probeCtx = probe.getContext("2d", { willReadFrequently: true });
-  if (!probeCtx) throw new Error("Image compression isn't supported in this browser.");
-  probeCtx.drawImage(bitmap, 0, 0);
-  const bounds = findOpaqueBounds(probeCtx, bitmap.width, bitmap.height);
-
-  const contentWidth = bounds.right - bounds.left + 1;
-  const contentHeight = bounds.bottom - bounds.top + 1;
-  const hasTransparentMargin =
-    contentWidth < bitmap.width - 1 || contentHeight < bitmap.height - 1;
-
-  let side: number;
-  let sx: number;
-  let sy: number;
-  if (hasTransparentMargin) {
-    side = Math.min(Math.max(contentWidth, contentHeight), bitmap.width, bitmap.height);
-    const cx = bounds.left + contentWidth / 2;
-    const cy = bounds.top + contentHeight / 2;
-    sx = clamp(cx - side / 2, 0, bitmap.width - side);
-    sy = clamp(cy - side / 2, 0, bitmap.height - side);
-  } else {
-    side = Math.min(bitmap.width, bitmap.height);
-    sx = (bitmap.width - side) / 2;
-    sy = (bitmap.height - side) / 2;
-  }
-
-  const size = Math.min(side, BADGE_MAX_DIMENSION);
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Image compression isn't supported in this browser.");
-  ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, size, size);
-  bitmap.close();
-
-  return canvas.toDataURL("image/png");
-}
-
 export function CreateDropPage({ product }: { product: Product }) {
   const copy = COPY[product];
   const claimBasePath = CLAIM_BASE_PATH[product];
   const { address, provider } = useWallet();
 
-  // GET /api/events now requires proof of wallet ownership (it used to
-  // return every organizer's secret claim codes to anyone who asked) — this
-  // is a one-time signature per session, not a per-request cost.
-  const [sessionAddress, setSessionAddress] = useState<string | null>(null);
-  const [sessionChecked, setSessionChecked] = useState(false);
-  const [signingIn, setSigningIn] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  // GET /api/events requires proof of wallet ownership (it used to return
+  // every organizer's secret claim codes to anyone who asked) — a one-time
+  // signature per session, not a per-request cost.
+  const { sessionChecked, isAuthenticated, signingIn, authError, signIn: handleSignIn } = useOwnerSession();
 
   const [events, setEvents] = useState<OrganizerEvent[]>([]);
   const [title, setTitle] = useState("");
@@ -212,9 +110,6 @@ export function CreateDropPage({ product }: { product: Product }) {
   const now = useNow();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isAuthenticated =
-    !!address && !!sessionAddress && sessionAddress.toLowerCase() === address.toLowerCase();
-
   async function loadEvents() {
     const res = await fetch("/api/events");
     if (!res.ok) {
@@ -226,24 +121,6 @@ export function CreateDropPage({ product }: { product: Product }) {
     setEvents(allEvents.filter((event) => event.product === product));
   }
 
-  // Check for an existing session whenever the connected wallet changes —
-  // switching wallets should re-gate behind a fresh signature for that address.
-  useEffect(() => {
-    let cancelled = false;
-    async function checkSession() {
-      const res = await fetch("/api/auth/session");
-      const data = await res.json().catch(() => ({ address: null }));
-      if (!cancelled) {
-        setSessionAddress(data.address ?? null);
-        setSessionChecked(true);
-      }
-    }
-    checkSession();
-    return () => {
-      cancelled = true;
-    };
-  }, [address]);
-
   useEffect(() => {
     // loadEvents is also called directly after creating a drop (see
     // handleSubmit) — this effect only covers the "load on
@@ -252,41 +129,13 @@ export function CreateDropPage({ product }: { product: Product }) {
     if (isAuthenticated) loadEvents();
   }, [isAuthenticated]);
 
-  async function handleSignIn() {
-    if (!address || !provider) return;
-    setAuthError(null);
-    setSigningIn(true);
-    try {
-      const issuedAt = new Date().toISOString();
-      const message = signInMessage(address, issuedAt);
-      const signature = await signMessage(provider, address, message);
-
-      const res = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, issuedAt, signature }),
-      });
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        setAuthError(data?.error ?? "Sign-in failed.");
-        return;
-      }
-      setSessionAddress(data.address);
-    } catch (err) {
-      setAuthError(err instanceof Error ? err.message : "Sign-in failed.");
-    } finally {
-      setSigningIn(false);
-    }
-  }
-
   async function handlePictureChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setError(null);
     try {
-      const compressed = await compressBadgeImage(file);
+      const compressed = await compressSquareImage(file);
       setImageDataUrl(compressed);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process image.");
@@ -386,7 +235,7 @@ export function CreateDropPage({ product }: { product: Product }) {
       if (!res.ok) {
         // Deployment already succeeded on-chain — keep it in pendingDeployment
         // so a retry reuses it instead of redeploying.
-        setError(data.error ?? "Failed to create drop.");
+        setError(data.error ?? "Failed to create badge.");
         return;
       }
 
@@ -400,7 +249,7 @@ export function CreateDropPage({ product }: { product: Product }) {
       if (fileInputRef.current) fileInputRef.current.value = "";
       await loadEvents();
     } catch (err) {
-      setError(err instanceof Web3ClaimError ? err.message : "Failed to create drop.");
+      setError(err instanceof Web3ClaimError ? err.message : "Failed to create badge.");
     } finally {
       setSubmitting(false);
       setDeployStep("idle");
@@ -489,13 +338,13 @@ export function CreateDropPage({ product }: { product: Product }) {
 
   if (!address) {
     return (
-      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 px-6 py-24 text-center">
-        <span className="brand-kicker text-brand-mist/50">{copy.newDropKicker}</span>
-        <h1 className="font-heading text-3xl uppercase tracking-tight text-brand-mist">
+      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 px-4 py-16 text-center">
+        <span className="brand-kicker text-muted-foreground">{copy.newDropKicker}</span>
+        <h1 className="font-heading font-bold text-3xl tracking-tight text-foreground">
           Connect Your Wallet
         </h1>
-        <p className="text-sm text-brand-mist/60">{copy.connectSubtext}</p>
-        <p className="text-sm text-brand-mist/60">
+        <p className="text-sm text-muted-foreground">{copy.connectSubtext}</p>
+        <p className="text-sm text-muted-foreground">
           Connect your wallet using the button at the top of the page.
         </p>
       </div>
@@ -508,18 +357,18 @@ export function CreateDropPage({ product }: { product: Product }) {
 
   if (!isAuthenticated) {
     return (
-      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 px-6 py-24 text-center">
-        <span className="brand-kicker text-brand-mist/50">{copy.newDropKicker}</span>
-        <h1 className="font-heading text-3xl uppercase tracking-tight text-brand-mist">
+      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 px-4 py-16 text-center">
+        <span className="brand-kicker text-muted-foreground">{copy.newDropKicker}</span>
+        <h1 className="font-heading font-bold text-3xl tracking-tight text-foreground">
           Sign In
         </h1>
-        <p className="text-sm text-brand-mist/60">
+        <p className="text-sm text-muted-foreground">
           One signature, no gas, unlocks only the drops you made.
         </p>
         <button
           onClick={handleSignIn}
           disabled={signingIn}
-          className="pill-dark mt-2 h-11 px-6 text-sm font-medium disabled:opacity-50"
+          className="pill-light mt-2 h-11 px-6 text-sm disabled:opacity-50"
         >
           {signingIn ? "Check your wallet…" : "Sign In"}
         </button>
@@ -532,10 +381,10 @@ export function CreateDropPage({ product }: { product: Product }) {
   const historyEvents = events.filter((event) => now !== null && now > event.expiresAt);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-16">
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-10 px-4 py-6 sm:px-6 sm:py-8">
       <div className="flex flex-col gap-2">
-        <span className="brand-kicker text-brand-mist/50">{copy.newDropKicker}</span>
-        <h1 className="font-heading text-4xl uppercase tracking-tight text-brand-mist sm:text-5xl">
+        <span className="brand-kicker text-muted-foreground">{copy.newDropKicker}</span>
+        <h1 className="font-heading font-bold text-4xl tracking-tight text-foreground sm:text-5xl">
           {copy.heading}
         </h1>
       </div>
@@ -545,7 +394,7 @@ export function CreateDropPage({ product }: { product: Product }) {
           <div className="flex flex-col gap-2">
             <label
               htmlFor="title"
-              className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
+              className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
             >
               Event Title
             </label>
@@ -554,14 +403,14 @@ export function CreateDropPage({ product }: { product: Product }) {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 font-heading text-2xl uppercase tracking-tight text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+              className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 font-heading font-bold text-2xl tracking-tight text-foreground focus:border-white/40 focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-2">
             <label
               htmlFor="location"
-              className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
+              className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
             >
               Location
             </label>
@@ -570,14 +419,14 @@ export function CreateDropPage({ product }: { product: Product }) {
               required
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 text-sm text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+              className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-foreground focus:border-white/40 focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-2">
             <label
               htmlFor="description"
-              className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
+              className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
             >
               Description
             </label>
@@ -587,18 +436,22 @@ export function CreateDropPage({ product }: { product: Product }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="resize-none rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 text-sm text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+              className="resize-none rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-foreground focus:border-white/40 focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-3">
             <label
               htmlFor="picture"
-              className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
+              className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
             >
-              {copy.pictureLabel}
+              {copy.pictureLabel} <span className="text-brand-red">*</span>
             </label>
-            <div className="flex items-center gap-4 rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3">
+            <div
+              className={`flex items-center gap-4 rounded-lg border bg-white/[0.04] px-4 py-3 ${
+                imageDataUrl ? "border-white/[0.08]" : "border-dashed border-white/20"
+              }`}
+            >
               <EventBadge title={title || "?"} imageUrl={imageDataUrl || undefined} size={56} />
               <input
                 ref={fileInputRef}
@@ -607,7 +460,7 @@ export function CreateDropPage({ product }: { product: Product }) {
                 accept="image/*"
                 required={!imageDataUrl}
                 onChange={handlePictureChange}
-                className="flex-1 text-xs text-brand-mist/70 file:mr-3 file:border-0 file:bg-brand-ink file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-brand-mist"
+                className="flex-1 text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
               />
             </div>
           </div>
@@ -616,7 +469,7 @@ export function CreateDropPage({ product }: { product: Product }) {
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="eventEndDate"
-                className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
+                className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
               >
                 Event End Date
               </label>
@@ -626,9 +479,9 @@ export function CreateDropPage({ product }: { product: Product }) {
                 required
                 value={eventEndDate}
                 onChange={(e) => setEventEndDate(e.target.value)}
-                className="rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 text-sm text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+                className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-foreground focus:border-white/40 focus:outline-none"
               />
-              <p className="text-xs text-brand-mist/40">
+              <p className="text-xs text-muted-foreground/70">
                 Claim stays open through the next day.
               </p>
             </div>
@@ -636,7 +489,7 @@ export function CreateDropPage({ product }: { product: Product }) {
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="maxSupply"
-                className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50"
+                className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
               >
                 Max Supply
               </label>
@@ -649,10 +502,10 @@ export function CreateDropPage({ product }: { product: Product }) {
                 required
                 value={maxSupply}
                 onChange={(e) => setMaxSupply(e.target.value)}
-                className="rounded-lg border border-brand-mist/15 bg-brand-surface px-4 py-3 text-sm text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+                className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-foreground focus:border-white/40 focus:outline-none"
               />
-              <p className="text-xs text-brand-mist/40">
-                Capped at {MAX_SUPPLY_CAP} people. Drop closes early once reached.
+              <p className="text-xs text-muted-foreground/70">
+                Capped at {MAX_SUPPLY_CAP} people. Claiming closes early once reached.
               </p>
             </div>
           </div>
@@ -660,10 +513,13 @@ export function CreateDropPage({ product }: { product: Product }) {
           {error && <p className="text-sm text-brand-red">{error}</p>}
 
           <div className="flex flex-col items-start gap-2">
+            {!imageDataUrl && (
+              <p className="text-xs text-brand-red">Add a badge picture before deploying — the NFT can&apos;t be created without one.</p>
+            )}
             <button
               type="submit"
-              disabled={submitting}
-              className="pill-dark h-12 self-start px-8 text-sm font-medium disabled:opacity-50"
+              disabled={submitting || !imageDataUrl}
+              className="pill-light h-11 self-start px-6 text-sm disabled:opacity-50"
             >
               {deployStep === "deploying"
                 ? "Deploying contract…"
@@ -671,8 +527,8 @@ export function CreateDropPage({ product }: { product: Product }) {
                   ? "Saving drop…"
                   : copy.submitLabel}
             </button>
-            <p className="text-xs text-brand-mist/40">
-              Creating a drop deploys its own contract from your wallet — you&apos;ll be asked to
+            <p className="text-xs text-muted-foreground/70">
+              Creating a badge deploys its own contract from your wallet — you&apos;ll be asked to
               approve a small AVAX gas fee.
             </p>
           </div>
@@ -680,29 +536,29 @@ export function CreateDropPage({ product }: { product: Product }) {
 
         <aside className="flex flex-col gap-8">
           <div className="flex flex-col items-center gap-4">
-            <span className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/40">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
               Preview
             </span>
             <EventBadge title={title || "Your Event"} imageUrl={imageDataUrl || undefined} size={160} />
           </div>
 
           <div className="flex flex-col gap-3">
-            <span className="brand-kicker text-brand-mist/50">{copy.yourDropsKicker}</span>
+            <span className="brand-kicker text-muted-foreground">{copy.yourDropsKicker}</span>
 
             {activeEvents.length === 0 && (
-              <p className="text-sm text-brand-mist/50">{copy.noActiveDrops}</p>
+              <p className="text-sm text-muted-foreground">{copy.noActiveDrops}</p>
             )}
 
             {activeEvents.map((event) => (
               <div
                 key={event.id}
-                className="flex flex-col gap-3 rounded-xl border border-brand-mist/15 bg-brand-surface p-4"
+                className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="truncate font-heading text-sm uppercase tracking-wide text-brand-mist">
+                  <h3 className="truncate font-heading font-bold text-sm tracking-wide text-foreground">
                     {event.title}
                   </h3>
-                  <span className="whitespace-nowrap bg-brand-ink px-2 py-0.5 text-[10px] font-medium text-brand-mist">
+                  <span className="whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-[10px] font-medium text-foreground">
                     Open
                   </span>
                 </div>
@@ -726,12 +582,12 @@ export function CreateDropPage({ product }: { product: Product }) {
                   {copiedLinkId === event.id ? "Link copied!" : "Copy claim link"}
                 </button>
 
-                <p className="text-[11px] text-brand-mist/40">
+                <p className="text-[11px] text-muted-foreground/70">
                   Claimed {event.claimedCount}
                   {typeof event.maxSupply === "number" ? ` / ${event.maxSupply}` : " · unlimited"}
                 </p>
 
-                <p className="text-[11px] text-brand-mist/40">
+                <p className="text-[11px] text-muted-foreground/70">
                   Claim closes {formatDate(event.expiresAt)}
                 </p>
                 <div className="flex items-center gap-2">
@@ -745,7 +601,7 @@ export function CreateDropPage({ product }: { product: Product }) {
                     onChange={(e) =>
                       setSupplyDrafts((current) => ({ ...current, [event.id]: e.target.value }))
                     }
-                    className="flex-1 rounded-md border border-brand-mist/15 bg-brand-surface px-2 py-1.5 text-[11px] text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+                    className="flex-1 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1.5 text-[11px] text-foreground focus:border-white/40 focus:outline-none"
                   />
                   <button
                     onClick={() => handleSupplyUpdate(event)}
@@ -762,7 +618,7 @@ export function CreateDropPage({ product }: { product: Product }) {
                     onChange={(e) =>
                       setExtendDrafts((current) => ({ ...current, [event.id]: e.target.value }))
                     }
-                    className="flex-1 rounded-md border border-brand-mist/15 bg-brand-surface px-2 py-1.5 text-[11px] text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+                    className="flex-1 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1.5 text-[11px] text-foreground focus:border-white/40 focus:outline-none"
                   />
                   <button
                     onClick={() => handleExtend(event.id)}
@@ -780,19 +636,19 @@ export function CreateDropPage({ product }: { product: Product }) {
           {supplyError && <p className="text-sm text-brand-red">{supplyError}</p>}
 
           {historyEvents.length > 0 && (
-            <div className="flex flex-col gap-1 border-t border-brand-mist/10 pt-6">
-              <span className="brand-kicker mb-2 text-brand-mist/40">History</span>
+            <div className="flex flex-col gap-1 border-t border-border pt-6">
+              <span className="brand-kicker mb-2 text-muted-foreground/70">History</span>
               {historyEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="flex flex-col gap-2 rounded-lg px-2 py-2 text-xs text-brand-mist/50 hover:bg-brand-ink hover:text-brand-mist"
+                  className="flex flex-col gap-2 rounded-lg px-2 py-2 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
                 >
                   <Link
                     href={`${claimBasePath}/${event.slug}`}
                     className="flex items-center justify-between gap-2"
                   >
                     <span className="truncate">{event.title}</span>
-                    <span className="whitespace-nowrap text-brand-mist/30">
+                    <span className="whitespace-nowrap text-muted-foreground/70">
                       Closed {formatDate(event.expiresAt)}
                     </span>
                   </Link>
@@ -803,7 +659,7 @@ export function CreateDropPage({ product }: { product: Product }) {
                       onChange={(e) =>
                         setExtendDrafts((current) => ({ ...current, [event.id]: e.target.value }))
                       }
-                      className="flex-1 rounded-md border border-brand-mist/15 bg-brand-surface px-2 py-1.5 text-[11px] text-brand-mist focus:border-brand-mist/40 focus:outline-none"
+                      className="flex-1 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1.5 text-[11px] text-foreground focus:border-white/40 focus:outline-none"
                     />
                     <button
                       onClick={() => handleExtend(event.id)}

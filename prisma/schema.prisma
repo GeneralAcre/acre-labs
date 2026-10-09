@@ -54,16 +54,54 @@ model Event {
   @@index([ownerAddress])
 }
 
-// A hackathon check-in: just a name and X handle, no wallet — for the
-// Content session's "who's here" wall.
-model CheckIn {
-  id        String   @id @default(uuid())
-  name      String
-  // Normalized (no leading "@", lowercased) so the same person can't check
-  // in twice under different casing.
-  xHandle   String   @unique
-  createdAt DateTime @default(now())
+// A community on Content — anyone signed in with a wallet can create one,
+// and anyone can then make a member card (CheckIn) in it.
+model Community {
+  id           String    @id @default(uuid())
+  slug         String    @unique
+  name         String
+  description  String?
+  // Square logo, client-compressed data: URI (same pipeline as badge art).
+  imageUrl     String?
+  // ID card template colors (#rrggbb). The layout is fixed for every
+  // community; only these change — like a school ID restyled each year.
+  cardColor    String    @default("#ffffff")
+  accentColor  String    @default("#e0101e")
+  // "Date of issue" printed on every member card; null falls back to the
+  // date each member made their card.
+  issueDate    DateTime?
+  // Creator's lowercased wallet — null only for the original Team1 Thailand
+  // wall, which predates communities.
+  ownerAddress String?
+  createdAt    DateTime  @default(now())
 
+  members CheckIn[]
+
+  @@index([ownerAddress])
+}
+
+// A community member card: name, X handle and optional profile picture, no
+// wallet involved.
+model CheckIn {
+  id          String    @id @default(uuid())
+  // Defaults to the original Team1 Thailand community (seeded by the
+  // add_communities migration) so rows created before communities existed —
+  // and any deploy still running the old single-wall code — land there.
+  communityId String    @default("team1-thailand")
+  name        String
+  // Normalized (no leading "@", lowercased) so the same person can't join
+  // the same community twice under different casing.
+  xHandle     String
+  avatarUrl   String?
+  // Optional title shown on the ID card (e.g. "Builder", "Speaker");
+  // the card falls back to "Member".
+  role        String?
+  createdAt   DateTime  @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, xHandle])
+  @@index([communityId])
   @@index([createdAt])
 }
 
@@ -85,4 +123,17 @@ model Claim {
   @@index([eventId])
   @@index([walletAddress])
   @@index([txHash])
+}
+
+// Per-wallet profile: a display name the owner can set and change, plus an
+// optional X handle that links the wallet to its Content member card (check-
+// ins have no wallet of their own) for leaderboard scoring.
+model Profile {
+  // Lowercased 0x address — matches Claim.walletAddress normalization.
+  address     String   @id
+  displayName String?
+  // Normalized like CheckIn.xHandle (no "@", lowercased). Unique so a member
+  // card can only ever be credited to one wallet.
+  xHandle     String?  @unique
+  updatedAt   DateTime @updatedAt
 }

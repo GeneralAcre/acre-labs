@@ -21,8 +21,8 @@ function CoreWalletIcon() {
 }
 
 const SIZE_CLASSES = {
-  sm: "h-9 px-4 text-xs",
-  lg: "h-12 px-8 text-sm",
+  sm: "h-10 px-4 text-sm",
+  lg: "h-11 px-6 text-sm",
 } as const;
 
 // "dark" reads correctly on light backgrounds; "light" is for placement on
@@ -80,7 +80,7 @@ export function WalletButton({
           <button
             onClick={beginConnect}
             disabled={connecting}
-            className={`pill-dark font-medium disabled:opacity-50 ${sizeClass}`}
+            className={`pill-light disabled:opacity-50 ${sizeClass}`}
           >
             {connecting ? "Connecting…" : connectLabel}
           </button>
@@ -88,9 +88,9 @@ export function WalletButton({
       )}
 
       {isMenuOpen && address && (
-        <div className="absolute right-0 top-full z-20 mt-2 w-44 rounded-xl border border-brand-mist/10 bg-brand-surface p-2 text-left shadow-lg">
+        <div className="absolute right-0 top-full z-20 mt-2 w-44 rounded-xl border border-border bg-popover p-1.5 text-left shadow-2xl shadow-black/60">
           {providerName && (
-            <p className="px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-brand-mist/50">
+            <p className="px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
               {providerName}
             </p>
           )}
@@ -99,7 +99,7 @@ export function WalletButton({
               setMenuOpen(false);
               switchWallet();
             }}
-            className="flex w-full items-center rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
+            className="flex w-full items-center rounded-lg px-2 py-2 text-sm text-foreground hover:bg-secondary"
           >
             Switch wallet
           </button>
@@ -108,7 +108,7 @@ export function WalletButton({
               setMenuOpen(false);
               disconnect();
             }}
-            className="flex w-full items-center rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
+            className="flex w-full items-center rounded-lg px-2 py-2 text-sm text-foreground hover:bg-secondary"
           >
             Disconnect
           </button>
@@ -116,8 +116,8 @@ export function WalletButton({
       )}
 
       {isChooserOpen && (
-        <div className="absolute right-0 top-full z-20 mt-2 w-56 rounded-xl border border-brand-mist/10 bg-brand-surface p-2 text-left shadow-lg">
-          <p className="px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-brand-mist/50">
+        <div className="absolute right-0 top-full z-20 mt-2 w-56 rounded-xl border border-border bg-popover p-1.5 text-left shadow-2xl shadow-black/60">
+          <p className="px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
             Choose a wallet
           </p>
           {/* Always listed first, with its own icon, whether or not the
@@ -127,7 +127,7 @@ export function WalletButton({
           {coreDetail ? (
             <button
               onClick={() => chooseWallet(coreDetail)}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-foreground hover:bg-secondary"
             >
               <CoreWalletIcon />
               Core Wallet
@@ -137,18 +137,18 @@ export function WalletButton({
               href="https://core.app/tools"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-foreground hover:bg-secondary"
             >
               <CoreWalletIcon />
               Core Wallet
-              <span className="ml-auto text-[10px] text-brand-mist/40">Install</span>
+              <span className="ml-auto text-[10px] text-muted-foreground/70">Install</span>
             </a>
           )}
           {otherWallets.map((detail) => (
             <button
               key={detail.info.uuid}
               onClick={() => chooseWallet(detail)}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-foreground hover:bg-secondary"
             >
               {/* EIP-6963 icons are data URIs, not external requests */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -158,19 +158,19 @@ export function WalletButton({
           ))}
           <button
             onClick={connectWithEmail}
-            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand-mist hover:bg-brand-mist/5"
+            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-foreground hover:bg-secondary"
           >
-            <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-mist/10 text-xs">
+            <span className="flex h-5 w-5 items-center justify-center rounded bg-secondary text-xs">
               ✉
             </span>
             Continue with Email
           </button>
-          <p className="px-2 pt-1 text-[10px] text-brand-mist/40">
+          <p className="px-2 pt-1 text-[10px] text-muted-foreground/70">
             No wallet? We&apos;ll create one for you.
           </p>
           <button
             onClick={closeChooser}
-            className="mt-1 w-full rounded-lg px-2 py-2 text-left text-xs text-brand-mist/50 hover:bg-brand-mist/5"
+            className="mt-1 w-full rounded-lg px-2 py-2 text-left text-xs text-muted-foreground hover:bg-secondary"
           >
             Cancel
           </button>
@@ -178,7 +178,7 @@ export function WalletButton({
       )}
 
       {error && !isChooserOpen && (
-        <p className="absolute right-0 top-full z-20 mt-2 w-56 rounded-lg border border-brand-red/20 bg-brand-surface p-2 text-xs text-brand-red shadow-lg">
+        <p className="absolute right-0 top-full z-20 mt-2 w-56 rounded-lg border border-brand-red/30 bg-popover p-2 text-xs text-brand-red shadow-lg">
           {error}{" "}
           {!error.startsWith("Email sign-in") && (
             <a

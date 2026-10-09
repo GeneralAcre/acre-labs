@@ -23,10 +23,14 @@ export function Identicon({
   address,
   size = 64,
   className = "",
+  tone = "light",
 }: {
   address: string;
   size?: number;
   className?: string;
+  // "light" for white surfaces (pass/check-in strips), "dark" for the dark
+  // page background.
+  tone?: "light" | "dark";
 }) {
   const seed = hashSeed(address.toLowerCase());
   const cells: Array<[number, number]> = [];
@@ -49,7 +53,9 @@ export function Identicon({
   return (
     <div
       style={{ width: size, height: size }}
-      className={`flex shrink-0 items-center justify-center rounded-full border border-brand-ink/10 bg-brand-ink/5 ${className}`}
+      className={`flex shrink-0 items-center justify-center rounded-full border ${
+        tone === "dark" ? "border-white/10 bg-[#101211]" : "border-brand-ink/10 bg-brand-ink/5"
+      } ${className}`}
     >
       <svg
         viewBox={`0 0 ${ROWS} ${ROWS}`}
@@ -58,7 +64,7 @@ export function Identicon({
         shapeRendering="crispEdges"
       >
         {cells.map(([x, y]) => (
-          <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} className="fill-brand-ink" />
+          <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} className={tone === "dark" ? "fill-white/85" : "fill-brand-ink"} />
         ))}
       </svg>
     </div>

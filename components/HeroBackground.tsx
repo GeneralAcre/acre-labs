@@ -49,9 +49,10 @@ export function HeroBackground() {
           }`}
         />
       ))}
-      {/* Plain dark wash on top of the photos so the white text stays
-          readable no matter which image is showing. */}
-      <div className="absolute inset-0 bg-black/65" />
+      {/* Dark wash plus traded.gg-style edge/center shade so the white
+          text stays readable no matter which image is showing. */}
+      <div className="absolute inset-0 bg-black/55" />
+      <div className="hero-shade absolute inset-0" />
     </div>
   );
 }

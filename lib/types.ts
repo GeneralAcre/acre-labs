@@ -57,11 +57,57 @@ export interface CollectedClaim {
   event: PublicEvent;
 }
 
-// A hackathon check-in for the Content session's "who's here" wall — just a
-// name and X handle, no wallet involved.
+// A community on Content, with its creator resolved to a display name
+// (their profile name, else a shortened address; "AcreLabs" for the original
+// Team1 Thailand wall, which has no wallet owner).
+export interface CommunityRecord {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  // ID card template colors (#rrggbb).
+  cardColor: string;
+  accentColor: string;
+  // "Date of issue" on member cards (ms); null = each member's own join date.
+  issueDate: number | null;
+  ownerAddress: string | null;
+  creatorName: string;
+  memberCount: number;
+  createdAt: number;
+}
+
+// One member card in a community — name, X handle and an optional profile
+// picture, no wallet involved.
 export interface CheckInRecord {
   id: string;
   name: string;
   xHandle: string;
+  avatarUrl: string | null;
+  role: string | null;
+  // 1-based position in the community by join order — shown on the card as
+  // e.g. "TE-0001".
+  memberNo: number;
   createdAt: number;
+}
+
+// A wallet's self-chosen identity. displayName replaces the shortened
+// address wherever the wallet is shown; xHandle links its Content member card.
+export interface ProfileRecord {
+  address: string;
+  displayName: string | null;
+  xHandle: string | null;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  address: string;
+  displayName: string | null;
+  xHandle: string | null;
+  badges: number;
+  memberCards: number;
+  points: number;
+  level: number;
+  name: string;
+  lastActiveAt: number | null;
 }

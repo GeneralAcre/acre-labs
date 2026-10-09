@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ACTIVE_CHAIN } from "@/lib/web3/chains";
 
@@ -5,17 +6,23 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="w-full border-t border-brand-mist/10 bg-brand-ink text-brand-mist">
-      <div className="mx-auto w-full max-w-5xl px-6 py-12 sm:px-10 sm:py-16">
-        <div className="grid gap-12 lg:grid-cols-[1.5fr_repeat(3,1fr)] lg:gap-8">
-          <div>
-            <Link href="/" className="font-heading text-4xl uppercase leading-none tracking-tight transition-opacity hover:opacity-70">
-              AcreLabs
+    <footer className="w-full border-t border-border bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="inline-flex items-center gap-2.5">
+              <Image
+                src="/project-logo/AcreLabs.png"
+                alt=""
+                width={43}
+                height={79}
+                className="h-7 w-auto brightness-0 invert"
+              />
+              <span className="text-lg font-bold tracking-tight text-foreground">AcreLabs</span>
             </Link>
-            <p className="mt-5 max-w-sm text-sm leading-relaxed text-brand-mist/60">
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
               A growing library of projects for collecting, recognizing, and preserving the moments that matter on Avalanche.
             </p>
-            <p className="mt-6 font-mono text-xs uppercase tracking-[0.16em] text-brand-mist/40">Built on Avalanche</p>
           </div>
 
           <FooterLinks
@@ -28,41 +35,60 @@ export function Footer() {
           <FooterLinks
             title="Platform"
             links={[
-              { href: "/claim", label: "Claim" },
-              { href: "/collection", label: "Collection" },
-              { href: "/create", label: "Create" },
+              { href: "/badge?tab=create", label: "Create Badge" },
               { href: "/profile", label: "Profile" },
             ]}
           />
-          <div className="flex flex-col gap-3">
-            <span className="brand-kicker text-brand-mist/40">Info</span>
-            <Link href="/terms" className="text-sm text-brand-mist/70 transition-colors hover:text-brand-mist">Terms of use</Link>
-            <Link href="/privacy" className="text-sm text-brand-mist/70 transition-colors hover:text-brand-mist">Privacy policy</Link>
-            <a href="https://www.avax.network/" target="_blank" rel="noopener noreferrer" className="text-sm text-brand-mist/70 transition-colors hover:text-brand-mist">Avalanche</a>
-            <a href={ACTIVE_CHAIN.explorerUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-brand-mist/70 transition-colors hover:text-brand-mist">SnowTrace</a>
-          </div>
+          <FooterLinks
+            title="Resources"
+            links={[
+              { href: "https://www.avax.network/", label: "Avalanche", external: true },
+              { href: ACTIVE_CHAIN.explorerUrl, label: "SnowTrace", external: true },
+            ]}
+          />
         </div>
-      </div>
 
-      <div className="border-t border-brand-mist/10">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 px-6 py-5 text-xs text-brand-mist/50 sm:flex-row sm:items-center sm:justify-between sm:px-10">
+        <div className="mt-12 flex flex-col-reverse items-start justify-between gap-4 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center">
           <span>© {year} AcreLabs. All rights reserved.</span>
-          <span>Every moment happens on Avalanche.</span>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link href="/terms" className="transition-colors hover:text-foreground">Terms</Link>
+            <Link href="/privacy" className="transition-colors hover:text-foreground">Privacy</Link>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#E84142]" aria-hidden="true" />
+              Built on Avalanche
+            </span>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
 
-function FooterLinks({ title, links }: { title: string; links: { href: string; label: string }[] }) {
+function FooterLinks({
+  title,
+  links,
+}: {
+  title: string;
+  links: { href: string; label: string; external?: boolean }[];
+}) {
   return (
-    <div className="flex flex-col gap-3">
-      <span className="brand-kicker text-brand-mist/40">{title}</span>
-      {links.map((link) => (
-        <Link key={link.label} href={link.href} className="text-sm text-brand-mist/70 transition-colors hover:text-brand-mist">
-          {link.label}
-        </Link>
-      ))}
+    <div>
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{title}</h3>
+      <ul className="mt-4 space-y-3">
+        {links.map((link) => (
+          <li key={link.label}>
+            {link.external ? (
+              <a href={link.href} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                {link.label}
+              </a>
+            ) : (
+              <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                {link.label}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

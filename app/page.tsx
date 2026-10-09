@@ -1,41 +1,43 @@
 import Image from "next/image";
 import { HeroBackground } from "@/components/HeroBackground";
-import { ProjectsCarousel } from "@/components/ProjectsCarousel";
 import { TypingText } from "@/components/TypingText";
 
 export default function Home() {
   return (
-    <>
-      <section className="dark-panel relative flex min-h-[68vh] items-center overflow-hidden px-6 py-20 sm:px-10">
-        <HeroBackground />
-        <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center text-center">
-          <h1 className="mt-5 font-heading text-6xl leading-[0.86] tracking-tight text-brand-mist sm:text-8xl lg:text-9xl">AcreLabs</h1>
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-brand-mist/80 sm:text-lg">Every moment happens on Avalanche, Recognized by us</p>
-        </div>
-      </section>
+    <main className="bg-background">
+      <section className="px-4 pt-5 sm:px-6 sm:pt-6">
+        <div className="mx-auto max-w-[1400px]">
+          <div className="dark-panel relative isolate overflow-hidden rounded-2xl border border-white/10 bg-black px-5 pb-12 pt-16 sm:px-8 sm:pb-16 sm:pt-24">
+            <HeroBackground />
+            <div className="relative z-10 mx-auto max-w-3xl text-center">
+              <h1 className="text-balance text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+                Every moment happens on Avalanche.
+              </h1>
+              <p className="mx-auto mt-4 max-w-xl text-balance text-sm leading-relaxed text-muted-foreground sm:text-base">
+                Claim on-chain proof of the events you showed up for — recognized by AcreLabs.
+              </p>
 
-      <section className="border-b border-brand-mist/10 bg-background px-6 py-9 sm:px-10">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center">
-          <span className="brand-kicker text-brand-mist/40">Built for</span>
-          <div className="flex items-center justify-center gap-8 sm:gap-12">
-            <Image src="/trustby/Team1.png" alt="Team1" width={2054} height={578} className="h-6 w-auto opacity-75 brightness-0 sm:h-7" />
-            <Image src="/trustby/AvalancheLogo.png" alt="Avalanche" width={1835} height={271} className="h-5 w-auto opacity-75 brightness-0 sm:h-6" />
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="px-6 py-16 sm:px-10 sm:py-20">
-        <div className="mx-auto w-full max-w-5xl">
+      <section className="px-4 py-8 sm:px-6">
+        <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-center gap-x-10 gap-y-4">
+          <span className="brand-kicker text-muted-foreground/70">Built for</span>
+          <Image src="/trustby/Team1.png" alt="Team1" width={2054} height={578} className="h-5 w-auto opacity-60 brightness-0 invert sm:h-6" />
+          <Image src="/trustby/AvalancheLogo.png" alt="Avalanche" width={1835} height={271} className="h-4 w-auto opacity-60 brightness-0 invert sm:h-5" />
+        </div>
+      </section>
+
+      <section className="px-4 py-12 sm:px-6 sm:py-20">
+        <div className="mx-auto max-w-[1400px]">
           <TypingText
             text="Acre Labs is a growing library of projects that collect, recognize, and preserve the moments that matter across Avalanche."
-            className="max-w-3xl text-2xl font-semibold leading-[0.95] tracking-tight text-brand-mist/80 sm:text-4xl"
+            className="mx-auto max-w-4xl text-center text-2xl font-semibold leading-snug tracking-tight text-muted-foreground sm:text-3xl lg:text-4xl"
           />
-          <div className="mt-16 max-w-xl sm:mt-20">
-            <h2 className="mt-3 font-heading text-4xl uppercase leading-[0.95] tracking-tight text-brand-mist sm:text-5xl">A library for Avalanche moments</h2>
-          </div>
-          <ProjectsCarousel />
         </div>
       </section>
-    </>
+    </main>
   );
 }

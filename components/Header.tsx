@@ -1,135 +1,86 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BadgeCheck, Trophy, UserRound, Users, type LucideIcon } from "lucide-react";
 import { WalletButton } from "./WalletButton";
 
-// Content is just a name+X check-in session with its own page — Claim and
-// Create Drop below are Badge's wallet-based mint flow.
-function navLinks() {
-  return [
-    { href: "/claim", label: "Claim" },
-    { href: "/collection", label: "Collection" },
-    { href: "/profile", label: "Profile" },
-    { href: "/create", label: "Create Drop" },
-  ];
-}
-
-function MenuIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <path d="M2.5 5H15.5M2.5 9H15.5M2.5 13H15.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
+// Badge holds the wallet-based claim gallery (and Create Badge tab);
+// Content is the name+X check-in session.
+const NAV_LINKS: { href: string; label: string; Icon: LucideIcon }[] = [
+  { href: "/badge", label: "Badge", Icon: BadgeCheck },
+  { href: "/content", label: "Content", Icon: Users },
+  { href: "/leaderboard", label: "Leaderboard", Icon: Trophy },
+  { href: "/profile", label: "Profile", Icon: UserRound },
+];
 
 export function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [menuOpen]);
-
-  if (pathname === "/") return null;
-
-  const links = navLinks();
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="relative z-20 w-full border-b border-brand-mist/10 bg-brand-surface text-brand-mist">
-      <div className="mx-auto flex w-full items-center justify-between px-6 py-4 sm:px-10">
-        <Link href="/" className="flex shrink-0 items-center">
-          <Image
-            src="/project-logo/AcreLabs.png"
-            alt="AcreLabs"
-            width={43}
-            height={79}
-            priority
-            className="h-8 w-auto brightness-0 sm:h-9"
-          />
-        </Link>
+    <>
+      <div className="sticky top-0 z-40">
+        <header className="flex h-16 items-center border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6 lg:px-8">
+          <Link href="/" className="flex shrink-0 items-center gap-2">
+            <Image
+              src="/project-logo/AcreLabs.png"
+              alt=""
+              width={43}
+              height={79}
+              priority
+              className="h-7 w-auto brightness-0 invert"
+            />
+            <span className="text-base font-bold tracking-tight text-foreground">AcreLabs</span>
+          </Link>
 
-        <div className="hidden items-center gap-6 sm:flex">
-          <nav className="flex items-center gap-6 text-xs font-medium uppercase tracking-[0.2em]">
-            {links.map((link) => (
-              <Link key={link.href} href={link.href} className="transition-colors hover:text-brand-blue">
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <WalletButton tone="light" />
-        </div>
-
-        <button
-          onClick={() => setMenuOpen(true)}
-          aria-label="Open menu"
-          aria-expanded={menuOpen}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-brand-mist/15 text-brand-mist sm:hidden"
-        >
-          <MenuIcon />
-        </button>
-      </div>
-
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-brand-surface text-brand-mist sm:hidden">
-          <div className="flex items-center justify-between px-4 py-4">
-            <Link
-              href="/"
-              onClick={() => setMenuOpen(false)}
-              className="flex shrink-0 items-center"
-            >
-              <Image
-                src="/project-logo/AcreLabs.png"
-                alt="AcreLabs"
-                width={43}
-                height={79}
-                className="h-8 w-auto brightness-0"
-              />
-            </Link>
-            <button
-              onClick={() => setMenuOpen(false)}
-              aria-label="Close menu"
-              className="pill-outline-light h-10 px-5 text-sm font-medium"
-            >
-              Close
-            </button>
-          </div>
-
-          <nav className="flex flex-1 flex-col items-center justify-center gap-2 px-6">
-            {links.map((link) => (
+          <nav className="ml-8 hidden items-center gap-2 md:flex">
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="w-full border-b border-brand-mist/10 py-5 text-center text-2xl font-medium uppercase tracking-wide transition-opacity first:border-t hover:opacity-60"
+                className={`rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.15em] transition-colors ${
+                  isActive(link.href) ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
               >
                 {link.label}
               </Link>
             ))}
-            <WalletButton
-              tone="light"
-              className="mt-8 w-full max-w-xs"
-              size="lg"
-            />
           </nav>
 
-          <div className="select-none overflow-hidden py-2">
-            <span
-              aria-hidden="true"
-              className="-mx-6 block whitespace-nowrap font-heading text-[22vw] uppercase leading-none text-brand-mist/10"
-            >
-              AcreLabs
-            </span>
+          <div className="ml-auto flex items-center gap-3">
+            <WalletButton tone="light" size="lg" />
           </div>
+        </header>
+      </div>
+
+      {/* Mobile: app-style bottom tab bar instead of a hamburger menu. The
+          root layout pads the page bottom on small screens so this never
+          covers the footer. */}
+      <nav
+        aria-label="Main navigation"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
+      >
+        <div className="grid h-16 grid-cols-4">
+          {NAV_LINKS.map(({ href, label, Icon }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={`flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors ${
+                  active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="size-5" strokeWidth={active ? 2.25 : 1.75} />
+                {label}
+              </Link>
+            );
+          })}
         </div>
-      )}
-    </header>
+      </nav>
+    </>
   );
 }

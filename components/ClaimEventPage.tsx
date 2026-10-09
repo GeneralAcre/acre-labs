@@ -178,11 +178,11 @@ export function ClaimEventPage({
 
   if (stage === "success" && txHash && event && address) {
     return (
-      <div className="bg-background flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
+      <div className="flex flex-1 items-center justify-center bg-background px-4 py-16 sm:px-6">
         <div className="flex w-full max-w-3xl flex-col items-center gap-6 text-center">
           <div className="flex flex-col gap-2">
-            <span className="brand-kicker text-brand-mist/60">Success</span>
-            <h1 className="font-heading text-2xl uppercase tracking-tight text-brand-mist">
+            <span className="brand-kicker text-muted-foreground">Success</span>
+            <h1 className="font-heading font-bold text-2xl tracking-tight text-foreground">
               {copy.successHeading}
             </h1>
           </div>
@@ -198,23 +198,23 @@ export function ClaimEventPage({
             passLabel={copy.passLabel}
           />
 
-          <p className="max-w-md text-xs text-brand-mist/50">
+          <p className="max-w-md text-xs text-muted-foreground">
             It should already appear in your wallet{tokenId ? ` — Token #${tokenId}` : ""}. If
             not, look for a &quot;refresh NFTs&quot; option in Core or MetaMask.
           </p>
 
-          <div className="h-px w-full max-w-md bg-brand-mist/10" />
+          <div className="h-px w-full max-w-md bg-border" />
 
           <div className="flex w-full max-w-md flex-col gap-3 sm:flex-row">
             <a
               href={txExplorerUrl(txHash)}
               target="_blank"
               rel="noopener noreferrer"
-              className="pill-outline-light h-11 flex-1 px-6 text-sm font-medium"
+              className="pill-outline-light h-11 flex-1 px-5 text-sm font-semibold"
             >
               View on SnowTrace
             </a>
-            <Link href="/profile" className="pill-dark h-11 flex-1 px-6 text-sm font-medium">
+            <Link href="/profile" className="pill-light h-11 flex-1 px-5 text-sm">
               View My Collection
             </Link>
           </div>
@@ -224,23 +224,24 @@ export function ClaimEventPage({
   }
 
   return (
-    <div className="dark-panel bg-black flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
-      <div className="w-full max-w-md rounded-3xl border border-brand-mist/10 bg-black/30 p-8 text-center shadow-[0_20px_70px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:p-10">
+    <div className="relative isolate flex flex-1 items-center justify-center bg-background px-4 py-16 sm:px-6">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_0%,rgba(60,131,246,0.14),transparent_60%)]" />
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-center shadow-2xl shadow-black/50 sm:p-8">
         <div className="flex flex-col items-center gap-6">
           {stage === "loading" && (
-            <p className="py-8 text-sm text-brand-mist/80">Loading event…</p>
+            <p className="py-8 text-sm text-muted-foreground">Loading event…</p>
           )}
 
           {stage === "not_found" && (
             <>
               <StateGlyph>?</StateGlyph>
               <div className="flex flex-col gap-2">
-                <span className="brand-kicker text-brand-mist/60">Attendee Access</span>
-                <h1 className="font-heading text-2xl uppercase tracking-tight text-brand-mist">
+                <span className="brand-kicker text-muted-foreground">Attendee Access</span>
+                <h1 className="font-heading font-bold text-2xl tracking-tight text-foreground">
                   Event Not Found
                 </h1>
               </div>
-              <p className="text-sm text-brand-mist/70">
+              <p className="text-sm text-muted-foreground">
                 Double-check the claim link and try again.
               </p>
             </>
@@ -252,12 +253,12 @@ export function ClaimEventPage({
                 <ClockIcon />
               </StateGlyph>
               <div className="flex flex-col gap-2">
-                <span className="brand-kicker text-brand-mist/60">Claim Window</span>
-                <h1 className="font-heading text-2xl uppercase tracking-tight text-brand-mist">
+                <span className="brand-kicker text-muted-foreground">Claim Window</span>
+                <h1 className="font-heading font-bold text-2xl tracking-tight text-foreground">
                   Claim Window Closed
                 </h1>
               </div>
-              <p className="text-sm text-brand-mist/70">
+              <p className="text-sm text-muted-foreground">
                 {event?.title ? `The claim window for "${event.title}" ` : "The claim window "}
                 closed at the end of the day after the event finished. Contact the organizer
                 if you believe this is a mistake.
@@ -271,12 +272,12 @@ export function ClaimEventPage({
                 <XIcon />
               </StateGlyph>
               <div className="flex flex-col gap-2">
-                <span className="brand-kicker text-brand-mist/60">Claim Window</span>
-                <h1 className="font-heading text-2xl uppercase tracking-tight text-brand-mist">
+                <span className="brand-kicker text-muted-foreground">Claim Window</span>
+                <h1 className="font-heading font-bold text-2xl tracking-tight text-foreground">
                   Sold Out
                 </h1>
               </div>
-              <p className="text-sm text-brand-mist/70">
+              <p className="text-sm text-muted-foreground">
                 {event?.title ? `"${event.title}" ` : "This drop "}
                 has reached its {event?.maxSupply} badge cap. Contact the organizer if you
                 believe this is a mistake.
@@ -286,49 +287,49 @@ export function ClaimEventPage({
 
           {(stage === "code_entry" || stage === "claiming") && event && (
             <>
-              <div className="rounded-full shadow-[0_0_50px_-8px_rgba(255,255,255,0.25)]">
+              <div className="rounded-full shadow-[0_0_60px_-10px_rgba(60,131,246,0.55)]">
                 <EventBadge title={event.title} imageUrl={event.imageUrl} size={140} />
               </div>
 
               <div className="flex flex-col gap-2">
-                <span className="brand-kicker text-brand-mist/60">Attendee Access</span>
-                <h1 className="font-heading text-2xl uppercase tracking-tight text-brand-mist">
+                <span className="brand-kicker text-muted-foreground">Attendee Access</span>
+                <h1 className="font-heading font-bold text-2xl tracking-tight text-foreground">
                   {event.title}
                 </h1>
               </div>
 
               {event.description && (
-                <p className="max-w-sm text-sm text-brand-mist/70">{event.description}</p>
+                <p className="max-w-sm text-sm text-muted-foreground">{event.description}</p>
               )}
 
               {claimPercent !== null && (
-                <div className="flex w-full flex-col gap-2 rounded-xl border border-brand-mist/15 bg-brand-mist/5 px-4 py-3">
+                <div className="flex w-full flex-col gap-2 rounded-xl border border-border bg-secondary px-4 py-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium uppercase tracking-[0.2em] text-brand-mist/50">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                       Claimed
                     </span>
-                    <span className="font-heading text-sm text-brand-mist">
+                    <span className="font-heading font-bold text-sm text-foreground">
                       {event.claimedCount} / {event.maxSupply}
                     </span>
                   </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-brand-mist/10">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-accent">
                     <div
-                      className="h-full rounded-full bg-brand-mist transition-[width] duration-500"
+                      className="h-full rounded-full bg-brand-blue transition-[width] duration-500"
                       style={{ width: `${claimPercent}%` }}
                     />
                   </div>
                 </div>
               )}
 
-              <div className="h-px w-full bg-brand-mist/10" />
+              <div className="h-px w-full bg-border" />
 
               {!address ? (
-                <p className="text-sm text-brand-mist/80">
+                <p className="text-sm text-muted-foreground">
                   Connect your wallet to claim this NFT
                 </p>
               ) : (
                 <div className="flex w-full flex-col items-center gap-4">
-                  <p className="text-sm text-brand-mist/80">{copy.codeInstructions}</p>
+                  <p className="text-sm text-muted-foreground">{copy.codeInstructions}</p>
                   <form
                     onSubmit={handleSubmit}
                     className="flex w-full flex-col items-center gap-4"
@@ -340,17 +341,17 @@ export function ClaimEventPage({
                       autoFocus
                       placeholder="••••••"
                       disabled={stage === "claiming"}
-                      className="w-full rounded-xl border border-brand-mist/20 bg-brand-mist/5 px-4 py-4 text-center font-mono text-2xl uppercase tracking-[0.4em] text-brand-mist placeholder:text-brand-mist/30 focus:border-brand-mist/50 focus:outline-none focus:ring-2 focus:ring-brand-mist/20"
+                      className="h-14 w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 text-center font-mono text-2xl uppercase tracking-[0.4em] text-foreground placeholder:text-muted-foreground/50 focus:border-white/40 focus:outline-none"
                     />
                     {errorMessage && (
-                      <p className="w-full rounded-lg border border-brand-red/40 bg-brand-red/10 px-3 py-2 text-sm text-brand-mist">
+                      <p className="w-full rounded-lg border border-brand-red/40 bg-brand-red/10 px-3 py-2 text-sm text-foreground">
                         {errorMessage}
                       </p>
                     )}
                     <button
                       type="submit"
                       disabled={stage === "claiming" || code.length !== 6}
-                      className="pill-dark h-12 w-full text-sm font-medium transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                      className="pill-light h-11 w-full text-sm disabled:pointer-events-none disabled:opacity-50"
                     >
                       {stage === "claiming" ? "Claiming…" : "Claim NFT"}
                     </button>
@@ -367,7 +368,7 @@ export function ClaimEventPage({
 
 function StateGlyph({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-16 w-16 items-center justify-center rounded-full border border-brand-mist/15 bg-brand-mist/5 font-heading text-brand-mist/70">
+    <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-secondary font-heading font-bold text-muted-foreground">
       {children}
     </div>
   );

@@ -15,7 +15,7 @@ export function PrivyClientProvider({ children }: { children: ReactNode }) {
         loginMethods: ["email"],
         appearance: {
           theme: "dark",
-          accentColor: "#d80819",
+          accentColor: "#3c83f6",
           // Empty on purpose: external wallets (Core, MetaMask) are handled by
           // our own EIP-6963 picker above, not Privy.
           walletList: [],

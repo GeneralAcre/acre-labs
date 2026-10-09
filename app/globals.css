@@ -5,58 +5,55 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* AcreLabs is a fixed light brand experience (editorial, f.inc-inspired) —
-     every component uses the explicit brand-* tokens below rather than
-     reacting to system theme. Without this, browsers auto-dark-theme native
-     form controls (inputs, date pickers) on a dark-mode OS, which then clash
-     with our explicitly light surfaces.
+  /* AcreLabs uses a fixed dark theme modeled on traded.gg: near-black
+     background, #141414 cards, hairline #262626 borders, Geist type, and
+     soft 10-16px corners. Every component uses the brand-* tokens below
+     rather than reacting to the OS theme.
      brand-mist and brand-ink are an always-inverted pair used throughout for
-     "panel background" + "text/mark on that panel" (e.g. PassportCard's
-     attendee strip, tooltips, code chips) — flipping both together keeps
-     every such pairing self-consistent. .dark-panel below resets both back
-     to their original dark-theme values for the handful of surfaces (hero
-     gradients, badge circles) that are always dark regardless of the site's
-     overall theme. */
-  color-scheme: light;
-  --brand-red: #d80819;
-  --brand-blue: #0099ff;
-  --brand-mist: #111111;
-  --brand-ink: #ffffff;
-  --brand-surface: #f1f1f1;
-  --background: #f1f1f1;
-  --foreground: #111111;
-  --card: #ffffff;
-  --card-foreground: #111111;
-  --popover: #ffffff;
-  --popover-foreground: #111111;
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  /* Sharp, editorial corners sitewide — cascades through every
-     rounded-{sm,md,lg,xl,2xl,3xl,4xl} utility via the @theme block below. */
-  --radius: 0rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+     "text/mark" + "the surface it sits on" — mist is the foreground (white),
+     ink is the darkest surface. bg-brand-mist panels therefore render as
+     light chips with ink text (tooltips, code chips), matching traded's
+     white primary buttons. */
+  color-scheme: dark;
+  --brand-red: #cf3030;
+  --brand-blue: #3c83f6;
+  --brand-mist: #ffffff;
+  --brand-ink: #0a0a0a;
+  --brand-surface: #141414;
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --card: #141414;
+  --card-foreground: #ffffff;
+  --popover: #141414;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #0b0b0b;
+  --secondary: #1f1f1f;
+  --secondary-foreground: #ffffff;
+  --muted: #1f1f1f;
+  --muted-foreground: #a1a1a1;
+  --accent: #292929;
+  --accent-foreground: #ffffff;
+  --destructive: #cf3030;
+  --border: #262626;
+  --input: #262626;
+  --ring: #a1a1a1;
+  --chart-1: #3c83f6;
+  --chart-2: #21c45d;
+  --chart-3: #a1a1a1;
+  --chart-4: #737373;
+  --chart-5: #262626;
+  /* Control radius (buttons, inputs) — rounded-xl/2xl land on traded's
+     12-16px surface radius via the scale in @theme below. */
+  --radius: 0.625rem;
+  --sidebar: #141414;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #3c83f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1f1f1f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #262626;
+  --sidebar-ring: #a1a1a1;
 }
 
 @theme inline {
@@ -67,9 +64,9 @@
   --color-brand-mist: var(--brand-mist);
   --color-brand-ink: var(--brand-ink);
   --color-brand-surface: var(--brand-surface);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-space-grotesk);
+  --font-heading: var(--font-geist-sans);
   --animate-blink-cursor: blink-cursor 1.2s step-end infinite;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -100,13 +97,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.25rem;
+  --radius-4xl: 1.5rem;
   @keyframes blink-cursor {
   0%, 49% {
     opacity: 1;
@@ -119,98 +116,114 @@
 
 body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Stays dark corner-to-corner regardless of element size — keeps the white
-   badge initials readable at every badge size instead of landing on a pale
-   edge. Page heroes no longer use a gradient; this is only for badge
-   artwork. */
+/* Badge artwork fill — stays dark corner-to-corner so white initials are
+   readable at every size. Blue-to-black, after traded's primary accent. */
 .badge-gradient {
-  background: linear-gradient(135deg, var(--brand-red) 0%, #5c0710 100%);
+  background: linear-gradient(135deg, var(--brand-blue) 0%, #0b1a3a 100%);
 }
 
+/* Small uppercase label above headings and in nav, as on traded.gg. */
 .brand-kicker {
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 
-/* "Pill" is a legacy name from the rounded-button era — kept for every call
-   site's className, but sharp-cornered now to match f.inc. */
-.pill-dark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0;
-  background: var(--brand-ink);
-  color: var(--brand-mist);
-  transition: background-color 0.2s ease;
-}
-
-.pill-dark:hover {
-  background: color-mix(in srgb, var(--brand-mist) 10%, var(--brand-ink));
-}
-
-/* Built from the brand-mist/ink variables (not hardcoded white) so it reads
-   correctly both on a plain light surface and inside .dark-panel, where
-   those variables are reset back to their dark-theme values. */
-.pill-outline-light {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0;
-  border: 1px solid color-mix(in srgb, var(--brand-mist) 50%, transparent);
-  color: var(--brand-mist);
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
-}
-
-.pill-outline-light:hover {
-  background: color-mix(in srgb, var(--brand-mist) 12%, transparent);
-}
-
-/* Opaque, unlike .pill-outline-light — stays readable regardless of what's
-   behind it instead of depending on a translucent border/text color
-   matching it. */
+/* "Pill" class names are legacy (from the rounded-button era) and kept for
+   every call site; they now map onto traded.gg's button set:
+   pill-light        primary — white gradient fill ("btn-fill")
+   pill-dark         secondary — solid #1f1f1f
+   pill-outline-*    ghost — hairline border, fills on hover */
 .pill-light {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0;
-  background: var(--brand-mist);
-  color: var(--brand-ink);
-  border: 1px solid color-mix(in srgb, var(--brand-ink) 8%, transparent);
-  transition: background-color 0.2s ease;
+  border-radius: var(--radius);
+  color: #0b0b0b;
+  font-weight: 600;
+  background-image: linear-gradient(#ffffff, #e9e9ec);
+  box-shadow:
+    inset 0 1px #ffffffe6,
+    0 1px 2px #00000080,
+    0 4px 14px -6px #00000099;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .pill-light:hover {
-  background: color-mix(in srgb, var(--brand-ink) 10%, var(--brand-mist));
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px #ffffffe6,
+    0 2px 4px #00000080,
+    0 10px 22px -8px #000000b3;
 }
 
+.pill-light:active {
+  transform: scale(0.98);
+}
+
+.pill-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: var(--secondary);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+}
+
+.pill-dark:hover {
+  background: var(--accent);
+}
+
+.pill-outline-light,
 .pill-outline-dark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0;
-  border: 1px solid color-mix(in srgb, var(--brand-ink) 40%, transparent);
-  color: var(--brand-ink);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  color: var(--foreground);
   transition:
     background-color 0.2s ease,
-    color 0.2s ease;
+    border-color 0.2s ease;
 }
 
+.pill-outline-light:hover,
 .pill-outline-dark:hover {
-  background: color-mix(in srgb, var(--brand-ink) 8%, transparent);
+  background: var(--secondary);
+  border-color: color-mix(in srgb, var(--foreground) 30%, transparent);
 }
 
-/* Resets brand-mist/ink to their original dark-theme pairing (light text,
-   dark ink) for surfaces that are always dark regardless of the site's
-   overall theme — hero gradient bands, badge circles, and photo overlays. */
+/* Formerly reset brand-mist/ink for always-dark surfaces on the light
+   theme; the whole site is dark now, so it just pins the same pairing. */
 .dark-panel {
   --brand-mist: #ffffff;
-  --brand-ink: #1c1c1c;
+  --brand-ink: #0a0a0a;
+}
+
+/* traded.gg hero shade: darkens edges and center so overlaid text reads
+   on any photo. */
+.hero-shade {
+  background:
+    linear-gradient(#0000001a, #0000 45%, #0000008c),
+    radial-gradient(at 50% 45%, #0009, #0003 55%, #0000 85%);
+}
+
+/* Pulsing "live" dot (traded's giveaway indicator). */
+.live-dot {
+  display: inline-block;
+  height: 0.375rem;
+  width: 0.375rem;
+  border-radius: 9999px;
+  background: #7dd3fc;
+  box-shadow: 0 0 7px #7dd3fc66;
 }
 
 .dark {

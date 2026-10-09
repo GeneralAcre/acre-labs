@@ -78,7 +78,7 @@ export default function ClaimDetailPage({
   if (stage === "loading") {
     return (
       <div className="flex flex-1 items-center justify-center px-6 py-24">
-        <p className="text-sm text-brand-mist/60">Loading…</p>
+        <p className="text-sm text-muted-foreground">Loading…</p>
       </div>
     );
   }
@@ -86,15 +86,15 @@ export default function ClaimDetailPage({
   if (stage === "not_found" || !claim) {
     return (
       <div className="flex flex-1 flex-col items-center gap-4 px-6 py-24 text-center">
-        <span className="brand-kicker text-brand-red">My Collection</span>
-        <h1 className="font-heading text-2xl uppercase tracking-tight text-brand-mist">
+        <span className="brand-kicker text-muted-foreground">My Collection</span>
+        <h1 className="font-heading font-bold text-2xl tracking-tight text-foreground">
           Claim Not Found
         </h1>
-        <p className="text-sm text-brand-mist/60">
+        <p className="text-sm text-muted-foreground">
           This claim doesn&apos;t exist or the link is incorrect.
         </p>
-        <Link href="/collection" className="pill-dark h-11 px-6 text-sm font-medium">
-          Back to Collection
+        <Link href="/badge" className="pill-light h-11 px-6 text-sm">
+          Back to Badge
         </Link>
       </div>
     );
@@ -109,12 +109,12 @@ export default function ClaimDetailPage({
     <div className="flex flex-1 flex-col">
       {/* Short decorative banner — the badge card and content below float over
           it via negative margin, so it never has to carry readable text. */}
-      <div className="bg-background h-40 sm:h-48" />
+      <div className="h-40 bg-[radial-gradient(ellipse_at_50%_0%,rgba(60,131,246,0.22),transparent_70%)] sm:h-48" />
 
       <div className="mx-auto -mt-28 w-full max-w-3xl flex-1 px-4 pb-16 sm:-mt-32">
         <Link
           href={backHref}
-          className="pill-light mb-6 inline-flex h-9 items-center gap-1.5 px-4 text-xs font-medium"
+          className="pill-outline-light mb-6 inline-flex h-9 items-center gap-1.5 bg-background/60 px-3 text-xs font-medium backdrop-blur"
         >
           {backLabel}
         </Link>
@@ -132,62 +132,62 @@ export default function ClaimDetailPage({
           />
 
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <span className="pill-outline-light inline-flex h-9 items-center px-4 text-xs font-medium text-brand-mist/70">
+            <span className="pill-outline-light inline-flex h-9 items-center px-4 text-xs font-medium text-muted-foreground">
               {isMine ? "Claimed by you" : `Claimed by ${shortenAddress(claim.walletAddress)}`}
             </span>
             <span
               className={`rounded-full px-3 py-1 text-xs font-medium ${
-                closed ? "bg-brand-red/10 text-brand-red" : "bg-brand-mist/10 text-brand-mist"
+                closed ? "bg-brand-red/10 text-brand-red" : "bg-secondary text-foreground"
               }`}
             >
               {closed ? "Claim window closed" : "Claim open"}
             </span>
-            <span className="rounded-full bg-brand-mist/10 px-3 py-1 text-xs font-medium text-brand-mist">
+            <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground">
               {ACTIVE_CHAIN.name}
             </span>
           </div>
         </div>
 
         <div className="mt-8 flex flex-col gap-5 text-left">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium uppercase tracking-wide text-brand-mist/40">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
             <span>
-              Drop <span className="text-brand-mist">#{shortDropId(claim.event.id)}</span>
+              Drop <span className="text-foreground">#{shortDropId(claim.event.id)}</span>
             </span>
             <span>/</span>
             <a
               href={txExplorerUrl(claim.txHash)}
               target="_blank"
               rel="noopener noreferrer"
-              className="normal-case tracking-normal text-brand-red hover:underline"
+              className="normal-case tracking-normal text-brand-blue hover:underline"
             >
               View on SnowTrace
             </a>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
-              <span className="text-xs text-brand-mist/50">Claimed</span>
-              <p className="mt-1 text-sm font-medium text-brand-mist">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <span className="text-xs text-muted-foreground">Claimed</span>
+              <p className="mt-1 text-sm font-medium text-foreground">
                 {formatDate(claim.claimedAt)}
               </p>
             </div>
-            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
-              <span className="text-xs text-brand-mist/50">Event Ended</span>
-              <p className="mt-1 text-sm font-medium text-brand-mist">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <span className="text-xs text-muted-foreground">Event Ended</span>
+              <p className="mt-1 text-sm font-medium text-foreground">
                 {formatDate(claim.event.eventEndTime)}
               </p>
             </div>
-            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
-              <span className="text-xs text-brand-mist/50">Wallet</span>
-              <p className="mt-1 font-mono text-sm font-medium text-brand-mist">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <span className="text-xs text-muted-foreground">Wallet</span>
+              <p className="mt-1 font-mono text-sm font-medium text-foreground">
                 {shortenAddress(claim.walletAddress)}
               </p>
             </div>
-            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
-              <span className="text-xs text-brand-mist/50">Contract</span>
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <span className="text-xs text-muted-foreground">Contract</span>
               {isMine ? (
                 <div className="mt-1 flex items-center justify-between gap-2">
-                  <p className="break-all font-mono text-sm font-medium text-brand-mist">
+                  <p className="break-all font-mono text-sm font-medium text-foreground">
                     {claim.event.contractAddress}
                   </p>
                   <button
@@ -199,20 +199,20 @@ export default function ClaimDetailPage({
                   </button>
                 </div>
               ) : (
-                <p className="mt-1 font-mono text-sm font-medium text-brand-mist">
+                <p className="mt-1 font-mono text-sm font-medium text-foreground">
                   {shortenAddress(claim.event.contractAddress)}
                 </p>
               )}
             </div>
-            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm">
-              <span className="text-xs text-brand-mist/50">Token ID</span>
-              <p className="mt-1 font-mono text-sm font-medium text-brand-mist">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <span className="text-xs text-muted-foreground">Token ID</span>
+              <p className="mt-1 font-mono text-sm font-medium text-foreground">
                 {claim.tokenId ?? "—"}
               </p>
             </div>
-            <div className="rounded-xl border border-brand-mist/10 bg-brand-surface p-4 shadow-sm sm:col-span-2">
-              <span className="text-xs text-brand-mist/50">Transaction</span>
-              <p className="mt-1 break-all font-mono text-sm font-medium text-brand-mist">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:col-span-2">
+              <span className="text-xs text-muted-foreground">Transaction</span>
+              <p className="mt-1 break-all font-mono text-sm font-medium text-foreground">
                 {claim.txHash}
               </p>
             </div>

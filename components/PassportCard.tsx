@@ -47,7 +47,7 @@ export function PassportCard({
 
   return (
     <div
-      className={`relative mx-auto grid w-full max-w-3xl overflow-hidden rounded-3xl border border-brand-mist/10 bg-brand-ink shadow-2xl shadow-black/40 sm:grid-cols-[1.3fr_1fr] ${className}`}
+      className={`relative mx-auto grid w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-black/60 sm:grid-cols-[1.3fr_1fr] ${className}`}
     >
       <div className="dark-panel relative min-h-[200px] sm:min-h-[300px]">
         {imageUrl ? (
@@ -57,11 +57,11 @@ export function PassportCard({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-5 sm:p-7">
-          <span className="brand-kicker text-brand-mist/70">{passLabel}</span>
-          <h2 className="font-heading text-3xl uppercase leading-[0.9] tracking-tight text-brand-mist sm:text-4xl">
+          <span className="brand-kicker text-muted-foreground">{passLabel}</span>
+          <h2 className="font-heading font-bold text-3xl leading-[0.9] tracking-tight text-foreground sm:text-4xl">
             {title}
           </h2>
-          {location && <p className="text-xs text-brand-mist/60">{location}</p>}
+          {location && <p className="text-xs text-muted-foreground">{location}</p>}
         </div>
       </div>
 

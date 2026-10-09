@@ -3,10 +3,12 @@
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
-import type { CollectedClaim } from "@/lib/types";
+import type { CollectedClaim, ProfileRecord } from "@/lib/types";
 import { ClaimGrid } from "@/components/ClaimGrid";
 import { EventBadge } from "@/components/EventBadge";
 import { useWallet } from "@/components/WalletProvider";
+import { MyBadgeCodes } from "@/components/MyBadgeCodes";
+import { ProfileEditor } from "@/components/ProfileEditor";
 
 function shortenAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -63,9 +65,9 @@ function CheckIcon() {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1.5 border border-brand-mist/15 bg-brand-surface px-4 py-3.5">
-      <span className="text-[10px] font-medium uppercase tracking-widest text-brand-mist/45">{label}</span>
-      <span className="font-heading text-xl leading-none tracking-tight text-brand-mist">{value}</span>
+    <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-card px-4 py-3.5">
+      <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70">{label}</span>
+      <span className="font-heading font-bold text-xl leading-none tracking-tight text-foreground">{value}</span>
     </div>
   );
 }
@@ -91,6 +93,7 @@ export default function ProfilePage({
   const [sortDesc, setSortDesc] = useState(true);
   const [view, setView] = useState<ViewMode>("grid");
   const [copied, setCopied] = useState(false);
+  const [profile, setProfile] = useState<ProfileRecord | null>(null);
 
   // Validity is a pure function of the route param, not fetched state — no
   // effect needed to derive it, unlike the claims list below.
@@ -116,6 +119,20 @@ export default function ProfilePage({
     };
   }, [routeAddress, isInvalidAddress]);
 
+  useEffect(() => {
+    if (isInvalidAddress) return;
+    let cancelled = false;
+    async function loadProfile() {
+      const res = await fetch(`/api/profile?address=${routeAddress}`);
+      const data = await res.json().catch(() => ({ profile: null }));
+      if (!cancelled) setProfile(data.profile ?? null);
+    }
+    loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [routeAddress, isInvalidAddress]);
+
   const isMe = !!myAddress && myAddress.toLowerCase() === routeAddress.toLowerCase();
 
   // Prefer whatever identity Privy actually has for the signed-in session
@@ -123,8 +140,11 @@ export default function ProfilePage({
   // account) over a bare address, since an email reads as a name and an
   // address doesn't. Falls back to the address for everyone else, and for
   // "me" whenever the connection isn't a Privy/email session.
+  // A name the wallet set itself (Profile) always wins, for everyone viewing.
   const isEmailName = isMe && providerName === "Email" && !!privy.user?.email?.address;
-  const displayName = isEmailName ? privy.user!.email!.address! : shortenAddress(routeAddress);
+  const hasName = !!profile?.displayName || isEmailName;
+  const displayName =
+    profile?.displayName ?? (isEmailName ? privy.user!.email!.address! : shortenAddress(routeAddress));
 
   const earliestClaimedAt = useMemo(
     () => (claims.length ? Math.min(...claims.map((c) => c.claimedAt)) : null),
@@ -185,15 +205,15 @@ export default function ProfilePage({
   if (isInvalidAddress) {
     return (
       <div className="flex flex-1 flex-col items-center gap-4 px-6 py-24 text-center">
-        <span className="brand-kicker text-brand-red">Collection</span>
-        <h1 className="font-heading text-2xl uppercase tracking-tight text-brand-mist">
+        <span className="brand-kicker text-muted-foreground">Collection</span>
+        <h1 className="font-heading font-bold text-2xl tracking-tight text-foreground">
           Invalid Wallet Address
         </h1>
-        <p className="text-sm text-brand-mist/60">
+        <p className="text-sm text-muted-foreground">
           &quot;{routeAddress}&quot; doesn&apos;t look like a valid Avalanche address.
         </p>
-        <Link href="/collection" className="pill-dark h-11 px-6 text-sm font-medium">
-          Back to Collection
+        <Link href="/badge" className="pill-light h-11 px-6 text-sm">
+          Back to Badge
         </Link>
       </div>
     );
@@ -201,36 +221,32 @@ export default function ProfilePage({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="bg-background pt-16 pb-14">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-start px-4 text-left">
+      <div className="px-4 pt-5 sm:px-6 sm:pt-6">
+        <div className="relative isolate mx-auto flex w-full max-w-[1400px] flex-col items-start overflow-hidden rounded-2xl border border-border bg-card px-5 py-8 text-left sm:px-8 sm:py-10">
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_90%_0%,rgba(60,131,246,0.16),transparent_55%)]" />
           <div className="flex w-full flex-col gap-6 sm:flex-row sm:items-center">
-            <Link
-              href="/collection"
-              className="pill-light inline-flex h-9 shrink-0 items-center gap-1.5 px-4 text-xs font-medium"
-            >
-              Back
-            </Link>
+
 
             <div
               aria-hidden="true"
-              className="flex h-20 w-20 shrink-0 items-center justify-center border border-brand-mist/20 bg-brand-surface font-heading text-2xl uppercase tracking-tight text-brand-mist"
+              className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-border bg-card font-heading font-bold text-2xl tracking-tight text-foreground"
             >
               {routeAddress.slice(2, 4)}
             </div>
 
             <div className="flex flex-1 flex-col items-start gap-2">
-              <span className="brand-kicker text-brand-mist/50">
+              <span className="brand-kicker text-muted-foreground">
                 {isMe ? "Your Wallet" : "Collection"}
               </span>
 
-              {isEmailName ? (
+              {hasName ? (
                 <>
-                  <h1 className="font-heading text-4xl leading-none tracking-tight text-brand-mist">
+                  <h1 className="font-heading font-bold text-4xl leading-none tracking-tight text-foreground">
                     {displayName}
                   </h1>
                   <button
                     onClick={copyAddress}
-                    className="flex items-center gap-1.5 font-mono text-xs text-brand-mist/60 hover:text-brand-mist"
+                    className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground"
                     title="Copy full address"
                   >
                     {shortenAddress(routeAddress)}
@@ -243,14 +259,27 @@ export default function ProfilePage({
                   title="Copy full address"
                   className="group flex items-center gap-2"
                 >
-                  <h1 className="font-heading text-4xl leading-none tracking-tight text-brand-mist">
+                  <h1 className="font-heading font-bold text-4xl leading-none tracking-tight text-foreground">
                     {displayName}
                   </h1>
-                  <span className="text-brand-mist/40 group-hover:text-brand-mist">
+                  <span className="text-muted-foreground/70 group-hover:text-foreground">
                     {copied ? <CheckIcon /> : <CopyIcon />}
                   </span>
                 </button>
               )}
+              {profile?.xHandle && (
+                <a
+                  href={`https://x.com/${profile.xHandle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  @{profile.xHandle}
+                </a>
+              )}
+              {/* Keyed by the loaded profile so the editor's fields reset
+                  once the profile fetch resolves. */}
+              {isMe && <ProfileEditor key={profile?.address ?? "none"} profile={profile} onSaved={setProfile} />}
             </div>
           </div>
 
@@ -278,72 +307,25 @@ export default function ProfilePage({
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-12">
+      {isMe && <MyBadgeCodes />}
+
+      <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-10 sm:px-6">
         {stage === "loading" && (
-          <p className="text-sm text-brand-mist/60">Loading collection…</p>
+          <p className="text-sm text-muted-foreground">Loading collection…</p>
         )}
 
         {stage === "ready" && claims.length === 0 && (
-          <p className="text-sm text-brand-mist/60">
+          <p className="text-sm text-muted-foreground">
             {isMe ? "You haven't" : "This wallet hasn't"} claimed any drops yet.
           </p>
         )}
 
         {stage === "ready" && claims.length > 0 && (
           <>
-            <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search your badges"
-                className="h-11 w-full max-w-xs rounded-lg border border-brand-mist/15 bg-brand-surface px-4 text-sm text-brand-mist placeholder:text-brand-mist/30 focus:border-brand-mist/40 focus:outline-none"
-              />
 
-              <div className="flex items-center gap-2">
-                <label htmlFor="sortKey" className="text-xs text-brand-mist/50">
-                  Order by
-                </label>
-                <select
-                  id="sortKey"
-                  value={sortKey}
-                  onChange={(e) => setSortKey(e.target.value as SortKey)}
-                  className="h-9 rounded-lg border border-brand-mist/15 bg-brand-surface px-3 text-xs text-brand-mist focus:outline-none"
-                >
-                  <option value="date">Claim Date</option>
-                  <option value="title">Name</option>
-                </select>
-                <button
-                  onClick={() => setSortDesc((d) => !d)}
-                  aria-label="Toggle sort direction"
-                  className="flex h-9 items-center justify-center rounded-lg border border-brand-mist/15 px-3 text-xs font-medium text-brand-mist hover:bg-brand-ink"
-                >
-                  {sortDesc ? "Desc" : "Asc"}
-                </button>
-                <div className="flex overflow-hidden rounded-lg border border-brand-mist/15">
-                  <button
-                    onClick={() => setView("grid")}
-                    aria-label="Grid view"
-                    className={`flex h-9 w-9 items-center justify-center ${
-                      view === "grid" ? "bg-brand-ink text-brand-mist" : "text-brand-mist/40 hover:text-brand-mist"
-                    }`}
-                  >
-                    <GridIcon />
-                  </button>
-                  <button
-                    onClick={() => setView("list")}
-                    aria-label="List view"
-                    className={`flex h-9 w-9 items-center justify-center ${
-                      view === "list" ? "bg-brand-ink text-brand-mist" : "text-brand-mist/40 hover:text-brand-mist"
-                    }`}
-                  >
-                    <ListIcon />
-                  </button>
-                </div>
-              </div>
-            </div>
 
             {visibleClaims.length === 0 && (
-              <p className="text-sm text-brand-mist/60">No badges match your search.</p>
+              <p className="text-sm text-muted-foreground">No badges match your search.</p>
             )}
 
             {visibleClaims.length > 0 && view === "grid" && (
@@ -352,7 +334,7 @@ export default function ProfilePage({
                   <div className="flex flex-col gap-10">
                     {groups.map((group) => (
                       <div key={group.label} className="flex flex-col gap-4">
-                        <h2 className="font-heading text-lg uppercase tracking-tight text-brand-mist/70">
+                        <h2 className="font-heading font-bold text-lg tracking-tight text-muted-foreground">
                           {group.label}
                         </h2>
                         <ClaimGrid claims={group.items} />
@@ -366,19 +348,19 @@ export default function ProfilePage({
             )}
 
             {visibleClaims.length > 0 && view === "list" && (
-              <div className="flex flex-col divide-y divide-brand-mist/10 rounded-xl border border-brand-mist/10 bg-brand-surface shadow-sm">
+              <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card shadow-sm">
                 {visibleClaims.map((claim) => (
                   <Link
                     key={`${claim.eventId}:${claim.txHash}`}
                     href={`/collection/${claim.txHash}`}
-                    className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-brand-ink"
+                    className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-secondary"
                   >
                     <EventBadge title={claim.event.title} imageUrl={claim.event.imageUrl} size={40} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-brand-mist">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {claim.event.title}
                       </p>
-                      <p className="text-xs text-brand-mist/50">{formatDate(claim.claimedAt)}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(claim.claimedAt)}</p>
                     </div>
                   </Link>
                 ))}

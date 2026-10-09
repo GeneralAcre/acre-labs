@@ -29,7 +29,7 @@ export function EventBadge({
         // organizer-supplied URLs — neither goes through Vercel's remote
         // image optimizer, which only handles a configured allowlist of hosts.
         unoptimized
-        className={`aspect-square rounded-full border border-brand-mist/10 object-cover ${className}`}
+        className={`aspect-square rounded-full border border-border object-cover ${className}`}
       />
     );
   }
@@ -37,7 +37,7 @@ export function EventBadge({
   return (
     <div
       style={{ width: size, height: size }}
-      className={`badge-gradient dark-panel flex aspect-square items-center justify-center rounded-full border border-brand-mist/30 font-heading uppercase text-brand-mist ${className}`}
+      className={`badge-gradient dark-panel flex aspect-square items-center justify-center rounded-full border border-brand-mist/30 font-heading font-bold uppercase text-foreground ${className}`}
     >
       <span style={{ fontSize: size * 0.32 }}>{initialsFor(title)}</span>
     </div>
