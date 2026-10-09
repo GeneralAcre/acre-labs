@@ -17,13 +17,13 @@ const LOGS_API = `https://api.routescan.io/v2/network/${
   ACTIVE_CHAIN.id === 43114 ? "mainnet" : "testnet"
 }/evm/${ACTIVE_CHAIN.id}/etherscan/api`;
 
-interface MintLog {
+export interface MintLog {
   topics: string[];
   transactionHash: string;
   timeStamp: string;
 }
 
-async function fetchMintLogs(contract: string): Promise<MintLog[]> {
+export async function fetchMintLogs(contract: string): Promise<MintLog[]> {
   const url = `${LOGS_API}?module=logs&action=getLogs&address=${contract}&fromBlock=0&toBlock=latest&topic0=${TRANSFER_TOPIC}&topic1=${ZERO_TOPIC}&topic0_1_opr=and`;
   const res = await fetch(url, { cache: "no-store" });
   const data = await res.json().catch(() => null);

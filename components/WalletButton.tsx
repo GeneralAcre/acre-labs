@@ -11,6 +11,25 @@ function shortenAddress(address: string): string {
 // Core's brand mark (red field, white triangle) so it reads as a real wallet
 // option in the picker even when the extension isn't installed yet and there's
 // no EIP-6963 icon to show.
+// MetaMask's orange fox-tone mark, used when the extension isn't detected.
+function MetaMaskIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" className="rounded" aria-hidden="true">
+      <rect width="20" height="20" rx="4" fill="#F6851B" />
+      <path d="M5 5.5 L10 9 L15 5.5 L14 12.5 L10 15 L6 12.5 Z" fill="white" />
+    </svg>
+  );
+}
+
+const METAMASK_RDNS = "io.metamask";
+
+// Opens this page inside the MetaMask mobile app's browser on phones, or
+// MetaMask's download page on desktop — the official deep-link format.
+function metaMaskDeepLink(): string {
+  if (typeof window === "undefined") return "https://metamask.io/download/";
+  return `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}${window.location.search}`;
+}
+
 function CoreWalletIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" className="rounded" aria-hidden="true">
@@ -63,7 +82,10 @@ export function WalletButton({
   const sizeClass = SIZE_CLASSES[size];
   const connectedToneClass = CONNECTED_TONE_CLASSES[tone];
   const coreDetail = availableWallets.find(isCoreProvider) ?? null;
-  const otherWallets = availableWallets.filter((detail) => !isCoreProvider(detail));
+  const metaMaskDetail = availableWallets.find((detail) => detail.info.rdns === METAMASK_RDNS) ?? null;
+  const otherWallets = availableWallets.filter(
+    (detail) => !isCoreProvider(detail) && detail.info.rdns !== METAMASK_RDNS
+  );
 
   return (
     <div className={`relative inline-flex flex-col items-center gap-2 ${className}`}>
@@ -142,6 +164,29 @@ export function WalletButton({
               <CoreWalletIcon />
               Core Wallet
               <span className="ml-auto text-[10px] text-muted-foreground/70">Install</span>
+            </a>
+          )}
+          {/* MetaMask is always offered too: connects when installed,
+              otherwise opens the MetaMask app (mobile) or install page. */}
+          {metaMaskDetail ? (
+            <button
+              onClick={() => chooseWallet(metaMaskDetail)}
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-foreground hover:bg-secondary"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- EIP-6963 data: URI icon */}
+              <img src={metaMaskDetail.info.icon} alt="" width={20} height={20} className="rounded" />
+              MetaMask
+            </button>
+          ) : (
+            <a
+              href={metaMaskDeepLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-foreground hover:bg-secondary"
+            >
+              <MetaMaskIcon />
+              MetaMask
+              <span className="ml-auto text-[10px] text-muted-foreground/70">Open app</span>
             </a>
           )}
           {otherWallets.map((detail) => (

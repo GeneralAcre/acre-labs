@@ -1,21 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import type { EventRecord, Product } from "@/lib/types";
 import { EventBadge } from "@/components/EventBadge";
 import { useWallet } from "@/components/WalletProvider";
 import { Web3ClaimError } from "@/lib/web3/wallet";
 import { useOrigin } from "@/lib/useOrigin";
-import { useNow } from "@/lib/useNow";
 import { useOwnerSession } from "@/lib/useOwnerSession";
 import { compressSquareImage } from "@/lib/image";
 import { deployDropContract } from "@/lib/web3/factory";
 import { DROP_FACTORY_ADDRESS } from "@/lib/web3/chains";
-
-// Claim count is derived server-side (from the claims store) and attached
-// on top of the plain EventRecord shape returned by GET /api/events.
-type OrganizerEvent = EventRecord & { claimedCount: number };
 
 // Each product's claim gallery/detail pair lives under its own route prefix.
 const CLAIM_BASE_PATH: Record<Product, string> = {
@@ -29,8 +24,6 @@ const COPY: Record<
     newDropKicker: string;
     heading: string;
     pictureLabel: string;
-    yourDropsKicker: string;
-    noActiveDrops: string;
     connectSubtext: string;
     submitLabel: string;
   }
@@ -39,8 +32,6 @@ const COPY: Record<
     newDropKicker: "New Badge",
     heading: "Create a Badge",
     pictureLabel: "Badge Picture",
-    yourDropsKicker: "Your Badges",
-    noActiveDrops: "No active badges.",
     connectSubtext: "Manage the badges you create.",
     submitLabel: "Create badge",
   },
@@ -48,16 +39,10 @@ const COPY: Record<
     newDropKicker: "New Pass",
     heading: "Host a Hackathon",
     pictureLabel: "Pass Artwork",
-    yourDropsKicker: "Your Hackathons",
-    noActiveDrops: "No active hackathons.",
     connectSubtext: "Manage the hackathons you host.",
     submitLabel: "Create pass",
   },
 };
-
-function formatDate(ms: number): string {
-  return new Date(ms).toLocaleDateString();
-}
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -77,12 +62,11 @@ export function CreateDropPage({ product }: { product: Product }) {
   const claimBasePath = CLAIM_BASE_PATH[product];
   const { address, provider } = useWallet();
 
-  // GET /api/events requires proof of wallet ownership (it used to return
-  // every organizer's secret claim codes to anyone who asked) — a one-time
-  // signature per session, not a per-request cost.
+  // Creating a drop (POST /api/events) requires proof of wallet ownership — a
+  // one-time signature per session, not a per-request cost. Managing existing
+  // drops (codes, supply, deadline) lives on the owner's profile.
   const { sessionChecked, isAuthenticated, signingIn, authError, signIn: handleSignIn } = useOwnerSession();
 
-  const [events, setEvents] = useState<OrganizerEvent[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
@@ -98,36 +82,11 @@ export function CreateDropPage({ product }: { product: Product }) {
   const [pendingDeployment, setPendingDeployment] = useState<
     { id: string; contractAddress: string; txHash: string } | null
   >(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
-  const [extendDrafts, setExtendDrafts] = useState<Record<string, string>>({});
-  const [extendingId, setExtendingId] = useState<string | null>(null);
-  const [extendError, setExtendError] = useState<string | null>(null);
-  const [supplyDrafts, setSupplyDrafts] = useState<Record<string, string>>({});
-  const [updatingSupplyId, setUpdatingSupplyId] = useState<string | null>(null);
-  const [supplyError, setSupplyError] = useState<string | null>(null);
+  // The drop just created, shown with its claim code until the next one.
+  const [created, setCreated] = useState<EventRecord | null>(null);
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const origin = useOrigin();
-  const now = useNow();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  async function loadEvents() {
-    const res = await fetch("/api/events");
-    if (!res.ok) {
-      setEvents([]);
-      return;
-    }
-    const data = await res.json();
-    const allEvents: OrganizerEvent[] = data.events ?? [];
-    setEvents(allEvents.filter((event) => event.product === product));
-  }
-
-  useEffect(() => {
-    // loadEvents is also called directly after creating a drop (see
-    // handleSubmit) — this effect only covers the "load on
-    // sign-in/wallet-switch" trigger, not a general subscription.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (isAuthenticated) loadEvents();
-  }, [isAuthenticated]);
 
   async function handlePictureChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -146,6 +105,7 @@ export function CreateDropPage({ product }: { product: Product }) {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setCreated(null);
 
     if (!title.trim()) {
       setError("Title is required.");
@@ -247,7 +207,8 @@ export function CreateDropPage({ product }: { product: Product }) {
       setImageDataUrl("");
       setMaxSupply("");
       if (fileInputRef.current) fileInputRef.current.value = "";
-      await loadEvents();
+      setCreated(data.event);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setError(err instanceof Web3ClaimError ? err.message : "Failed to create badge.");
     } finally {
@@ -256,84 +217,10 @@ export function CreateDropPage({ product }: { product: Product }) {
     }
   }
 
-  async function handleExtend(eventId: string) {
-    const draft = extendDrafts[eventId];
-    const expiresAt = endOfDayTimestamp(draft ?? "");
-    if (expiresAt === null) {
-      setExtendError("Enter the new claim deadline as YYYY-MM-DD.");
-      return;
-    }
-
-    setExtendError(null);
-    setExtendingId(eventId);
-    try {
-      const res = await fetch(`/api/events/${eventId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expiresAt }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        setExtendError(data?.error ?? "Failed to extend the deadline.");
-        return;
-      }
-      setExtendDrafts((current) => {
-        const next = { ...current };
-        delete next[eventId];
-        return next;
-      });
-      await loadEvents();
-    } finally {
-      setExtendingId(null);
-    }
-  }
-
-  async function handleSupplyUpdate(event: OrganizerEvent) {
-    const rawSupply = supplyDrafts[event.id] ?? String(event.maxSupply ?? "");
-    const nextSupply = Number(rawSupply);
-    if (!Number.isInteger(nextSupply) || nextSupply < 1 || nextSupply > MAX_SUPPLY_CAP) {
-      setSupplyError(`Supply must be a whole number between 1 and ${MAX_SUPPLY_CAP}.`);
-      return;
-    }
-    if (nextSupply < event.claimedCount) {
-      setSupplyError(`Supply cannot be lower than the ${event.claimedCount} badge${event.claimedCount === 1 ? "" : "s"} already claimed.`);
-      return;
-    }
-
-    setSupplyError(null);
-    setUpdatingSupplyId(event.id);
-    try {
-      const res = await fetch(`/api/events/${event.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ maxSupply: nextSupply }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        setSupplyError(data?.error ?? "Failed to update supply.");
-        return;
-      }
-      setSupplyDrafts((current) => {
-        const next = { ...current };
-        delete next[event.id];
-        return next;
-      });
-      await loadEvents();
-    } finally {
-      setUpdatingSupplyId(null);
-    }
-  }
-
-  async function copyCode(id: string, code: string) {
-    await navigator.clipboard.writeText(code);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId((current) => (current === id ? null : current)), 1500);
-  }
-
-  async function copyLink(id: string, url: string) {
-    await navigator.clipboard.writeText(url);
-    setCopiedLinkId(id);
-    setTimeout(() => setCopiedLinkId((current) => (current === id ? null : current)), 1500);
+  async function copyToClipboard(kind: "code" | "link", value: string) {
+    await navigator.clipboard.writeText(value);
+    setCopied(kind);
+    setTimeout(() => setCopied((current) => (current === kind ? null : current)), 1500);
   }
 
   if (!address) {
@@ -377,122 +264,135 @@ export function CreateDropPage({ product }: { product: Product }) {
     );
   }
 
-  const activeEvents = events.filter((event) => !(now !== null && now > event.expiresAt));
-  const historyEvents = events.filter((event) => now !== null && now > event.expiresAt);
+  const claimUrl = created ? `${origin}${claimBasePath}/${created.slug}` : "";
+  const labelClass = "text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground";
+  const inputClass =
+    "rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:border-white/40 focus:outline-none sm:text-sm";
+  const endDateLabel = eventEndDate ? new Date(`${eventEndDate}T00:00`).toLocaleDateString(undefined, { dateStyle: "medium" }) : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-10 px-4 py-6 sm:px-6 sm:py-8">
-      <div className="flex flex-col gap-2">
-        <span className="brand-kicker text-muted-foreground">{copy.newDropKicker}</span>
-        <h1 className="font-heading font-bold text-4xl tracking-tight text-foreground sm:text-5xl">
-          {copy.heading}
-        </h1>
-      </div>
+    <div className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
+      {created && (
+        <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-[#21c45d]/30 bg-[#21c45d]/[0.06] p-5 lg:flex-row lg:items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-4">
+            <EventBadge title={created.title} imageUrl={created.imageUrl} size={56} className="shrink-0" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-foreground">&ldquo;{created.title}&rdquo; is live</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Share the claim code with attendees. Manage supply and deadline anytime from your profile.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-md bg-brand-mist px-3 py-2 font-mono text-base font-bold tracking-[0.3em] text-brand-ink">
+              {created.secretCode}
+            </span>
+            <button type="button" onClick={() => copyToClipboard("code", created.secretCode)} className="pill-outline-light h-10 px-3 text-xs font-medium">
+              {copied === "code" ? "Copied!" : "Copy code"}
+            </button>
+            <button type="button" onClick={() => copyToClipboard("link", claimUrl)} className="pill-outline-light h-10 px-3 text-xs font-medium">
+              {copied === "link" ? "Link copied!" : "Copy claim link"}
+            </button>
+            <Link href="/profile" className="pill-light h-10 px-4 text-xs">
+              Manage on profile
+            </Link>
+          </div>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_360px]">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-14">
+        <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-6">
+          <div>
+            <span className="brand-kicker text-muted-foreground">{copy.newDropKicker}</span>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{copy.heading}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Upload the badge art, fill in the event details, and deploy — attendees claim it with a code.
+            </p>
+          </div>
+
+          {/* Picture first — the badge can't be deployed without it. */}
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="title"
-              className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
-            >
-              Event Title
+            <label htmlFor="picture" className={labelClass}>
+              {copy.pictureLabel} <span className="text-brand-red">*</span>
             </label>
+            <div
+              className={`flex items-center gap-4 rounded-xl border bg-white/[0.04] p-4 ${
+                imageDataUrl ? "border-white/[0.08]" : "border-dashed border-brand-red/50"
+              }`}
+            >
+              <EventBadge title={title || "?"} imageUrl={imageDataUrl || undefined} size={64} className="shrink-0" />
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <input
+                  ref={fileInputRef}
+                  id="picture"
+                  type="file"
+                  accept="image/*"
+                  required={!imageDataUrl}
+                  onChange={handlePictureChange}
+                  className="w-full text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
+                />
+                {imageDataUrl ? (
+                  <p className="text-xs text-[#21c45d]">Picture added ✓</p>
+                ) : (
+                  <p className="text-xs text-brand-red">Required — the NFT can&apos;t be created without a picture.</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="title" className={labelClass}>Event title</label>
             <input
               id="title"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 font-heading font-bold text-2xl tracking-tight text-foreground focus:border-white/40 focus:outline-none"
+              placeholder="e.g. Team1 x KU : Introduction to Blockchain"
+              className={`${inputClass} text-lg font-semibold sm:text-lg`}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="location"
-              className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
-            >
-              Location
-            </label>
+            <label htmlFor="location" className={labelClass}>Location</label>
             <input
               id="location"
               required
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-foreground focus:border-white/40 focus:outline-none"
+              placeholder="e.g. Bangkok, Thailand"
+              className={inputClass}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="description"
-              className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
-            >
-              Description
-            </label>
+            <label htmlFor="description" className={labelClass}>Description</label>
             <textarea
               id="description"
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="resize-none rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-foreground focus:border-white/40 focus:outline-none"
+              placeholder="What was this event about?"
+              className={`${inputClass} resize-none`}
             />
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <label
-              htmlFor="picture"
-              className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
-            >
-              {copy.pictureLabel} <span className="text-brand-red">*</span>
-            </label>
-            <div
-              className={`flex items-center gap-4 rounded-lg border bg-white/[0.04] px-4 py-3 ${
-                imageDataUrl ? "border-white/[0.08]" : "border-dashed border-white/20"
-              }`}
-            >
-              <EventBadge title={title || "?"} imageUrl={imageDataUrl || undefined} size={56} />
-              <input
-                ref={fileInputRef}
-                id="picture"
-                type="file"
-                accept="image/*"
-                required={!imageDataUrl}
-                onChange={handlePictureChange}
-                className="flex-1 text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
-              />
-            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <label
-                htmlFor="eventEndDate"
-                className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
-              >
-                Event End Date
-              </label>
+              <label htmlFor="eventEndDate" className={labelClass}>Event end date</label>
               <input
                 id="eventEndDate"
                 type="date"
                 required
                 value={eventEndDate}
                 onChange={(e) => setEventEndDate(e.target.value)}
-                className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-foreground focus:border-white/40 focus:outline-none"
+                className={`${inputClass} [color-scheme:dark]`}
               />
-              <p className="text-xs text-muted-foreground/70">
-                Claim stays open through the next day.
-              </p>
+              <p className="text-xs text-muted-foreground/70">Claim stays open through the next day.</p>
             </div>
 
             <div className="flex flex-col gap-2">
-              <label
-                htmlFor="maxSupply"
-                className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground"
-              >
-                Max Supply
-              </label>
+              <label htmlFor="maxSupply" className={labelClass}>Max supply</label>
               <input
                 id="maxSupply"
                 type="number"
@@ -502,24 +402,22 @@ export function CreateDropPage({ product }: { product: Product }) {
                 required
                 value={maxSupply}
                 onChange={(e) => setMaxSupply(e.target.value)}
-                className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-foreground focus:border-white/40 focus:outline-none"
+                placeholder="e.g. 30"
+                className={inputClass}
               />
               <p className="text-xs text-muted-foreground/70">
-                Capped at {MAX_SUPPLY_CAP} people. Claiming closes early once reached.
+                Up to {MAX_SUPPLY_CAP}. Claiming closes early once reached.
               </p>
             </div>
           </div>
 
           {error && <p className="text-sm text-brand-red">{error}</p>}
 
-          <div className="flex flex-col items-start gap-2">
-            {!imageDataUrl && (
-              <p className="text-xs text-brand-red">Add a badge picture before deploying — the NFT can&apos;t be created without one.</p>
-            )}
+          <div className="flex flex-col items-start gap-2 border-t border-border pt-6">
             <button
               type="submit"
               disabled={submitting || !imageDataUrl}
-              className="pill-light h-11 self-start px-6 text-sm disabled:opacity-50"
+              className="pill-light h-11 px-6 text-sm disabled:pointer-events-none disabled:opacity-50"
             >
               {deployStep === "deploying"
                 ? "Deploying contract…"
@@ -528,151 +426,31 @@ export function CreateDropPage({ product }: { product: Product }) {
                   : copy.submitLabel}
             </button>
             <p className="text-xs text-muted-foreground/70">
-              Creating a badge deploys its own contract from your wallet — you&apos;ll be asked to
-              approve a small AVAX gas fee.
+              Creating a badge deploys its own contract from your wallet — you&apos;ll be asked to approve a small AVAX gas fee.
             </p>
           </div>
         </form>
 
-        <aside className="flex flex-col gap-8">
-          <div className="flex flex-col items-center gap-4">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-              Preview
-            </span>
-            <EventBadge title={title || "Your Event"} imageUrl={imageDataUrl || undefined} size={160} />
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <span className="brand-kicker text-muted-foreground">{copy.yourDropsKicker}</span>
-
-            {activeEvents.length === 0 && (
-              <p className="text-sm text-muted-foreground">{copy.noActiveDrops}</p>
-            )}
-
-            {activeEvents.map((event) => (
-              <div
-                key={event.id}
-                className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="truncate font-heading font-bold text-sm tracking-wide text-foreground">
-                    {event.title}
-                  </h3>
-                  <span className="whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-[10px] font-medium text-foreground">
-                    Open
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="flex-1 truncate rounded-md bg-brand-mist px-3 py-1.5 text-center font-mono text-sm font-bold tracking-[0.25em] text-brand-ink">
-                    {event.secretCode}
-                  </span>
-                  <button
-                    onClick={() => copyCode(event.id, event.secretCode)}
-                    className="pill-outline-light whitespace-nowrap px-2 py-1.5 text-[11px] font-medium"
-                  >
-                    {copiedId === event.id ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => copyLink(event.id, `${origin}${claimBasePath}/${event.slug}`)}
-                  className="pill-outline-light px-2 py-1.5 text-[11px] font-medium"
-                >
-                  {copiedLinkId === event.id ? "Link copied!" : "Copy claim link"}
-                </button>
-
-                <p className="text-[11px] text-muted-foreground/70">
-                  Claimed {event.claimedCount}
-                  {typeof event.maxSupply === "number" ? ` / ${event.maxSupply}` : " · unlimited"}
-                </p>
-
-                <p className="text-[11px] text-muted-foreground/70">
-                  Claim closes {formatDate(event.expiresAt)}
-                </p>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="1"
-                    max={MAX_SUPPLY_CAP}
-                    step="1"
-                    aria-label={`Max supply for ${event.title}`}
-                    value={supplyDrafts[event.id] ?? String(event.maxSupply ?? "")}
-                    onChange={(e) =>
-                      setSupplyDrafts((current) => ({ ...current, [event.id]: e.target.value }))
-                    }
-                    className="flex-1 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1.5 text-[11px] text-foreground focus:border-white/40 focus:outline-none"
-                  />
-                  <button
-                    onClick={() => handleSupplyUpdate(event)}
-                    disabled={updatingSupplyId === event.id}
-                    className="pill-outline-light whitespace-nowrap px-2 py-1.5 text-[11px] font-medium disabled:opacity-50"
-                  >
-                    {updatingSupplyId === event.id ? "Saving…" : "Update supply"}
-                  </button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    value={extendDrafts[event.id] ?? ""}
-                    onChange={(e) =>
-                      setExtendDrafts((current) => ({ ...current, [event.id]: e.target.value }))
-                    }
-                    className="flex-1 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1.5 text-[11px] text-foreground focus:border-white/40 focus:outline-none"
-                  />
-                  <button
-                    onClick={() => handleExtend(event.id)}
-                    disabled={extendingId === event.id}
-                    className="pill-outline-light whitespace-nowrap px-2 py-1.5 text-[11px] font-medium disabled:opacity-50"
-                  >
-                    {extendingId === event.id ? "Extending…" : "Extend"}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {extendError && <p className="text-sm text-brand-red">{extendError}</p>}
-          {supplyError && <p className="text-sm text-brand-red">{supplyError}</p>}
-
-          {historyEvents.length > 0 && (
-            <div className="flex flex-col gap-1 border-t border-border pt-6">
-              <span className="brand-kicker mb-2 text-muted-foreground/70">History</span>
-              {historyEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="flex flex-col gap-2 rounded-lg px-2 py-2 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  <Link
-                    href={`${claimBasePath}/${event.slug}`}
-                    className="flex items-center justify-between gap-2"
-                  >
-                    <span className="truncate">{event.title}</span>
-                    <span className="whitespace-nowrap text-muted-foreground/70">
-                      Closed {formatDate(event.expiresAt)}
-                    </span>
-                  </Link>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={extendDrafts[event.id] ?? ""}
-                      onChange={(e) =>
-                        setExtendDrafts((current) => ({ ...current, [event.id]: e.target.value }))
-                      }
-                      className="flex-1 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1.5 text-[11px] text-foreground focus:border-white/40 focus:outline-none"
-                    />
-                    <button
-                      onClick={() => handleExtend(event.id)}
-                      disabled={extendingId === event.id}
-                      className="pill-outline-light whitespace-nowrap px-2 py-1.5 text-[11px] font-medium disabled:opacity-50"
-                    >
-                      {extendingId === event.id ? "Extending…" : "Extend"}
-                    </button>
-                  </div>
-                </div>
-              ))}
+        <aside className="lg:sticky lg:top-20 lg:self-start">
+          <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-card p-6 text-center">
+            <span className={labelClass}>Preview</span>
+            <div className="rounded-full shadow-[0_0_60px_-12px_rgba(60,131,246,0.55)]">
+              <EventBadge title={title || "Your Event"} imageUrl={imageDataUrl || undefined} size={176} />
             </div>
-          )}
+            <div className="w-full min-w-0">
+              <p className="line-clamp-2 text-lg font-bold tracking-tight text-foreground">{title.trim() || "Your event title"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {[location.trim() || "Location", endDateLabel ? `Ends ${endDateLabel}` : "End date"].join(" · ")}
+              </p>
+            </div>
+            <div className="w-full rounded-xl border border-border bg-secondary px-4 py-3">
+              <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                <span>Claimed</span>
+                <span className="text-foreground">0 / {maxSupply.trim() || "—"}</span>
+              </div>
+              <div className="mt-2 h-1.5 w-full rounded-full bg-accent" />
+            </div>
+          </div>
         </aside>
       </div>
     </div>

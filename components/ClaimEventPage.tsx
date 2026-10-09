@@ -4,9 +4,10 @@ import { use, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import type { Product, PublicEventWithSupply } from "@/lib/types";
 import { claimNftOnChain, Web3ClaimError } from "@/lib/web3/claimNft";
-import { txExplorerUrl } from "@/lib/web3/chains";
+import { addressExplorerUrl, txExplorerUrl } from "@/lib/web3/chains";
 import { EventBadge } from "@/components/EventBadge";
 import { PassportCard } from "@/components/PassportCard";
+import { HoldersTable } from "@/components/HoldersTable";
 import { useWallet } from "@/components/WalletProvider";
 
 type Stage =
@@ -175,6 +176,12 @@ export function ClaimEventPage({
     event && typeof event.maxSupply === "number" && event.maxSupply > 0
       ? Math.min(100, Math.round((event.claimedCount / event.maxSupply) * 100))
       : null;
+
+  // Claiming is over: show the badge's details, mint stats and holders
+  // instead of a bare "closed" notice.
+  if ((stage === "expired" || stage === "sold_out") && event) {
+    return <ClosedBadge event={event} soldOut={stage === "sold_out"} />;
+  }
 
   if (stage === "success" && txHash && event && address) {
     return (
@@ -363,6 +370,91 @@ export function ClaimEventPage({
         </div>
       </div>
     </div>
+  );
+}
+
+function formatDate(ms: number): string {
+  return new Date(ms).toLocaleDateString(undefined, { dateStyle: "medium" });
+}
+
+function ClosedBadge({ event, soldOut }: { event: PublicEventWithSupply; soldOut: boolean }) {
+  const supply = typeof event.maxSupply === "number" ? event.maxSupply : null;
+  const percent = supply ? Math.min(100, Math.round((event.claimedCount / supply) * 100)) : null;
+  const details: { label: string; value: React.ReactNode }[] = [
+    ...(event.location ? [{ label: "Location", value: event.location }] : []),
+    { label: "Event date", value: formatDate(event.eventEndTime) },
+    { label: soldOut ? "Sold out" : "Claim closed", value: soldOut ? "All badges claimed" : formatDate(event.expiresAt) },
+    {
+      label: "Contract",
+      value: (
+        <a
+          href={addressExplorerUrl(event.contractAddress)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-mono text-foreground hover:underline"
+        >
+          {event.contractAddress.slice(0, 6)}…{event.contractAddress.slice(-4)} ↗
+        </a>
+      ),
+    },
+  ];
+
+  return (
+    <main className="relative isolate flex-1 bg-background px-4 py-8 sm:px-6 sm:py-10">
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(ellipse_at_50%_0%,rgba(60,131,246,0.14),transparent_65%)]" />
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <Link href="/badge" className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
+          ← All badges
+        </Link>
+
+        <section className="grid overflow-hidden rounded-2xl border border-border bg-card md:grid-cols-[300px_minmax(0,1fr)]">
+          <div className="flex items-center justify-center bg-[radial-gradient(circle_at_50%_40%,#1f1f1f,#0a0a0a_75%)] p-8">
+            <div className="rounded-full shadow-[0_0_60px_-12px_rgba(60,131,246,0.45)]">
+              <EventBadge title={event.title} imageUrl={event.imageUrl} size={200} />
+            </div>
+          </div>
+
+          <div className="flex min-w-0 flex-col gap-5 p-6 sm:p-8">
+            <div>
+              <span className="inline-flex items-center rounded-md bg-brand-red px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+                {soldOut ? "Sold out" : "Claim closed"}
+              </span>
+              <h1 className="mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{event.title}</h1>
+              {event.description && (
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{event.description}</p>
+              )}
+            </div>
+
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-5 sm:grid-cols-4">
+              {details.map((item) => (
+                <div key={item.label} className="min-w-0">
+                  <dt className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">{item.label}</dt>
+                  <dd className="mt-1 truncate text-sm text-foreground">{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="rounded-xl border border-border bg-secondary px-4 py-3">
+              <div className="flex items-baseline justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Minted</span>
+                <span className="text-sm font-semibold tabular-nums text-foreground">
+                  {event.claimedCount}
+                  {supply ? ` / ${supply}` : ""}
+                  {percent !== null && <span className="ml-2 font-normal text-muted-foreground">{percent}%</span>}
+                </span>
+              </div>
+              {percent !== null && (
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-accent">
+                  <div className="h-full rounded-full bg-brand-blue" style={{ width: `${percent}%` }} />
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <HoldersTable eventId={event.id} contractAddress={event.contractAddress} />
+      </div>
+    </main>
   );
 }
 

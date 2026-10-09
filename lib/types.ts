@@ -111,3 +111,12 @@ export interface LeaderboardEntry {
   name: string;
   lastActiveAt: number | null;
 }
+
+// One on-chain mint of a drop, as shown in a badge's holders table.
+export interface BadgeHolder {
+  address: string;
+  displayName: string | null;
+  tokenId: string;
+  txHash: string;
+  mintedAt: number;
+}

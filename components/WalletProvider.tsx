@@ -10,7 +10,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getEmbeddedConnectedWallet, usePrivy, useWallets } from "@privy-io/react-auth";
+import {
+  getEmbeddedConnectedWallet,
+  useCreateWallet,
+  usePrivy,
+  useWallets,
+} from "@privy-io/react-auth";
 import {
   discoverProviders,
   type Eip1193Provider,
@@ -41,7 +46,9 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const privy = usePrivy();
-  const { wallets: privyWallets } = useWallets();
+  const { wallets: privyWallets, ready: privyWalletsReady } = useWallets();
+  const { createWallet } = useCreateWallet();
+  const creatingEmbeddedWalletRef = useRef(false);
 
   const [address, setAddress] = useState<string | null>(null);
   const [provider, setProvider] = useState<Eip1193Provider | null>(null);
@@ -201,7 +208,29 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if ((address && !switchingToEmail) || !privy.ready || !privy.authenticated) return;
 
     const embedded = getEmbeddedConnectedWallet(privyWallets);
-    if (!embedded) return;
+    if (!embedded) {
+      // The Privy dashboard's "create on login" setting can override
+      // createOnLogin in PrivyClientProvider. If a signed-in email user ends up
+      // with no embedded wallet, create one here instead of leaving the
+      // button stuck on "Connecting…". Skipped when the account already has
+      // one that just hasn't finished connecting (createWallet would throw).
+      const hasEmbedded = privy.user?.linkedAccounts.some(
+        (account) => account.type === "wallet" && account.walletClientType === "privy"
+      );
+      if (privyWalletsReady && !hasEmbedded && !creatingEmbeddedWalletRef.current) {
+        creatingEmbeddedWalletRef.current = true;
+        createWallet()
+          .catch(() => {
+            setError("Couldn't create your wallet. Please try signing in again.");
+            setConnecting(false);
+            setSwitchingToEmail(false);
+          })
+          .finally(() => {
+            creatingEmbeddedWalletRef.current = false;
+          });
+      }
+      return;
+    }
 
     let cancelled = false;
     (async () => {
@@ -225,7 +254,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [address, switchingToEmail, privy.ready, privy.authenticated, privyWallets]);
+  }, [
+    address,
+    switchingToEmail,
+    privy.ready,
+    privy.authenticated,
+    privy.user,
+    privyWallets,
+    privyWalletsReady,
+    createWallet,
+  ]);
 
   // If the user opens the Privy login modal and closes it without completing
   // sign-in, stop the "Connecting…" spinner instead of leaving it stuck.

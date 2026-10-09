@@ -73,7 +73,7 @@ function FooterLinks({
 }) {
   return (
     <div>
-      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{title}</h3>
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-brand-red">{title}</h3>
       <ul className="mt-4 space-y-3">
         {links.map((link) => (
           <li key={link.label}>
