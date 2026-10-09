@@ -232,7 +232,10 @@ export function CommunityPage({ slug }: { slug: string }) {
                 </label>
                 <label className={labelClass}>
                   <span>
-                    Profile picture <span className="font-normal normal-case tracking-normal text-muted-foreground/70">Optional</span>
+                    Profile picture{" "}
+                    <span className="text-sm font-normal normal-case tracking-normal text-muted-foreground">
+                      Optional · square photo, at least 256 × 256 px
+                    </span>
                   </span>
                   <span className="flex items-center gap-4 rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3">
                     {avatarUrl ? (

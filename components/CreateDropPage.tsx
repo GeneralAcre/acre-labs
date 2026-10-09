@@ -336,6 +336,9 @@ export function CreateDropPage({ product }: { product: Product }) {
                 ) : (
                   <p className="text-xs text-brand-red">Required — the NFT can&apos;t be created without a picture.</p>
                 )}
+                <p className="text-sm text-muted-foreground">
+                  Square image, at least 512 × 512 px · PNG or JPG, up to 20 MB. Other shapes are cropped to the center.
+                </p>
               </div>
             </div>
           </div>
@@ -431,7 +434,7 @@ export function CreateDropPage({ product }: { product: Product }) {
           </div>
         </form>
 
-        <aside className="lg:sticky lg:top-20 lg:self-start">
+        <aside className="lg:self-start">
           <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-card p-6 text-center">
             <span className={labelClass}>Preview</span>
             <div className="rounded-full shadow-[0_0_60px_-12px_rgba(60,131,246,0.55)]">

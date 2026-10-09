@@ -124,8 +124,8 @@ export function CreateCommunityForm() {
         <label className={labelClass}>
           <span>
             Logo{" "}
-            <span className="font-normal normal-case tracking-normal text-muted-foreground/70">
-              Optional · shown next to the name on every card — a transparent PNG looks best
+            <span className="text-sm font-normal normal-case tracking-normal text-muted-foreground">
+              Optional · square, at least 512 × 512 px — a transparent PNG looks best
             </span>
           </span>
           <span className="flex items-center gap-4 rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3">
