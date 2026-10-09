@@ -47,7 +47,7 @@ export function ProfileMemberCards({ xHandle, isMe }: { xHandle: string | null; 
           cards you made with it.
         </p>
       ) : cards === null ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
           <div className="aspect-[1.55/1] animate-pulse rounded-xl bg-card motion-reduce:animate-none" />
         </div>
       ) : cards.length === 0 ? (
@@ -55,7 +55,7 @@ export function ProfileMemberCards({ xHandle, isMe }: { xHandle: string | null; 
           No member cards made with @{xHandle} yet.
         </p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
           {cards.map(({ community, member }) => (
             <div key={member.id} className="flex flex-col gap-2">
               <MemberCard

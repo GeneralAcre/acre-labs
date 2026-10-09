@@ -170,7 +170,13 @@ export function MemberCard({
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-neutral-900">
-                <Identicon address={xHandle} size={56} tone="dark" className="border-0 bg-transparent" />
+                {/* Sized relative to the photo box so it fits at any card width. */}
+                <Identicon
+                  address={xHandle}
+                  size={56}
+                  tone="dark"
+                  className="aspect-square !h-auto !w-[60%] border-0 bg-transparent [&>svg]:h-[72%] [&>svg]:w-[72%]"
+                />
               </div>
             )}
           </div>
