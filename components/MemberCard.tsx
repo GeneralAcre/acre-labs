@@ -1,3 +1,6 @@
+"use client";
+
+import { useLayoutEffect, useRef, type CSSProperties } from "react";
 import { Identicon } from "./Identicon";
 import { DEFAULT_ACCENT_COLOR, DEFAULT_CARD_COLOR, readableTextOn } from "@/lib/color";
 import { memberIdLabel } from "@/lib/memberId";
@@ -41,39 +44,62 @@ function Barcode({ seed }: { seed: string }) {
   );
 }
 
-// Each field column is ~22cqw wide, so longer values step down in size (and
-// may wrap to a second line) instead of being cut off with an ellipsis.
-function fieldSize(value: string): string {
-  const length = value.length;
-  if (length <= 9) return "4.2cqw";
-  if (length <= 12) return "3.4cqw";
-  if (length <= 16) return "2.7cqw";
-  if (length <= 28) return "2.3cqw";
-  return "1.9cqw";
-}
+// Shrinks text (in cqw, so it scales with the card) until it fits its box
+// on one line, measuring the real rendered width rather than guessing from
+// character count. Only if it still overflows at minSize does it wrap — text
+// is never cut off with an ellipsis. Re-fits whenever the card resizes.
+function FitText({
+  text,
+  maxSize,
+  minSize,
+  className = "",
+  style,
+}: {
+  text: string;
+  maxSize: number;
+  minSize: number;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  const ref = useRef<HTMLParagraphElement>(null);
 
-// Same idea for the headline, which spans the whole right column. Its
-// padding leaves room for the italic slant and drop shadow, which would
-// otherwise be clipped by line-clamp's overflow-hidden.
-function headlineSize(name: string): string {
-  const length = name.length;
-  if (length <= 12) return "6.4cqw";
-  if (length <= 18) return "5.2cqw";
-  if (length <= 26) return "4.6cqw";
-  if (length <= 40) return "4cqw";
-  return "3.2cqw";
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    function fit() {
+      if (!el) return;
+      let size = maxSize;
+      el.style.whiteSpace = "nowrap";
+      el.style.fontSize = `${size}cqw`;
+      while (el.scrollWidth > el.clientWidth + 1 && size > minSize) {
+        size = Math.max(minSize, size - 0.2);
+        el.style.fontSize = `${size}cqw`;
+      }
+      if (el.scrollWidth > el.clientWidth + 1) el.style.whiteSpace = "normal";
+    }
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [text, maxSize, minSize]);
+
+  return (
+    <p ref={ref} className={`min-w-0 break-words ${className}`} style={{ ...style, fontSize: `${maxSize}cqw` }}>
+      {text}
+    </p>
+  );
 }
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-[2.1cqw] font-semibold uppercase leading-none tracking-wide">{label}:</p>
-      <p
-        className="mt-[0.6cqw] line-clamp-2 break-words font-serif uppercase leading-[1.05] tracking-tight"
-        style={{ fontSize: fieldSize(value) }}
-      >
-        {value}
-      </p>
+      <FitText
+        text={value}
+        maxSize={4.2}
+        minSize={1.8}
+        className="mt-[0.6cqw] font-serif uppercase leading-[1.05] tracking-tight"
+      />
     </div>
   );
 }
@@ -160,12 +186,15 @@ export function MemberCard({
               // eslint-disable-next-line @next/next/no-img-element -- creator-uploaded data: URI
               <img src={communityLogo} alt="" className="h-[9cqw] w-auto max-w-[14cqw] shrink-0 object-contain" />
             ) : null}
-            <p
-              className="line-clamp-2 min-w-0 break-words pb-[0.4cqw] pr-[1.4cqw] font-black uppercase italic leading-[0.95] tracking-tight"
-              style={{ fontSize: headlineSize(communityName), color: accentColor, textShadow: `0.25cqw 0.25cqw 0 ${ink}` }}
-            >
-              {communityName}
-            </p>
+            {/* Right/bottom padding leaves room for the italic slant and drop
+                shadow, which the width measurement doesn't include. */}
+            <FitText
+              text={communityName}
+              maxSize={6.4}
+              minSize={3}
+              className="flex-1 pb-[0.4cqw] pr-[1.4cqw] font-black uppercase italic leading-[0.95] tracking-tight"
+              style={{ color: accentColor, textShadow: `0.25cqw 0.25cqw 0 ${ink}` }}
+            />
           </div>
 
           <div className="mt-auto grid grid-cols-2 gap-x-[3cqw] gap-y-[2.6cqw] pb-[1.5cqw]">
@@ -191,7 +220,7 @@ export function MemberCard({
         className="flex items-center justify-between gap-[2cqw] border-t-[0.4cqw] px-[4.5cqw] py-[1.4cqw] font-serif text-[2.4cqw] leading-none"
         style={{ backgroundColor: accentColor, color: stripInk, borderColor: ink }}
       >
-        <span className="truncate uppercase">{communityName}</span>
+        <FitText text={communityName} maxSize={2.4} minSize={1.4} className="flex-1 uppercase leading-none" />
         <span className="shrink-0">Verified member · AcreLabs</span>
       </div>
     </div>
