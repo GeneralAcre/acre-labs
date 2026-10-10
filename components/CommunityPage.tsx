@@ -43,7 +43,7 @@ export function CommunityPage({ slug }: { slug: string }) {
   while (takenNumbers.has(nextFreeNumber)) nextFreeNumber++;
   const memberNoValue = memberNoInput ?? String(nextFreeNumber);
   const memberNo = Number(memberNoValue);
-  const memberNoValid = /^d+$/.test(memberNoValue) && memberNo >= 1 && memberNo <= MAX_MEMBER_NO;
+  const memberNoValid = /^\d+$/.test(memberNoValue) && memberNo >= 1 && memberNo <= MAX_MEMBER_NO;
   const memberNoTaken = memberNoValid && takenNumbers.has(memberNo);
 
   useEffect(() => {
