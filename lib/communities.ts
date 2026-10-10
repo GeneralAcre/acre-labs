@@ -9,6 +9,8 @@ const MAX_DESCRIPTION_LENGTH = 280;
 const MAX_MEMBER_NAME_LENGTH = 60;
 const MAX_ROLE_LENGTH = 30;
 const MAX_PLACE_LENGTH = 80;
+// Card numbers print as four digits (e.g. KU-0042).
+export const MAX_MEMBER_NO = 9999;
 // Inline data: URIs — logos are compressed to 512px, avatars to 256px
 // client-side, so these only reject payloads that skipped that step.
 const MAX_LOGO_BYTES = 1024 * 1024;
@@ -46,14 +48,14 @@ function shortenAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
-function toCheckInRecord(row: PrismaCheckIn, memberNo: number): CheckInRecord {
+function toCheckInRecord(row: PrismaCheckIn): CheckInRecord {
   return {
     id: row.id,
     name: row.name,
     xHandle: row.xHandle,
     avatarUrl: row.avatarUrl,
     role: row.role,
-    memberNo,
+    memberNo: row.memberNo,
     createdAt: row.createdAt.getTime(),
   };
 }
@@ -119,11 +121,7 @@ export async function getCommunityBySlug(
     where: { communityId: row.id },
     orderBy: { createdAt: "desc" },
   });
-  // Newest first; member numbers count up from the earliest join.
-  return {
-    community,
-    members: members.map((member, index) => toCheckInRecord(member, members.length - index)),
-  };
+  return { community, members: members.map(toCheckInRecord) };
 }
 
 export type CreateCommunityFailure =
@@ -243,12 +241,14 @@ export type JoinFailure =
   | "invalid_handle"
   | "invalid_role"
   | "invalid_avatar"
+  | "invalid_member_no"
+  | "member_no_taken"
   | "already_member";
 export type JoinResult = { ok: true; member: CheckInRecord } | { ok: false; reason: JoinFailure };
 
 export async function joinCommunity(
   slug: string,
-  input: { name: string; xHandle: string; role?: string | null; avatarUrl?: string | null }
+  input: { name: string; xHandle: string; role?: string | null; avatarUrl?: string | null; memberNo: number }
 ): Promise<JoinResult> {
   const community = await prisma.community.findUnique({ where: { slug }, select: { id: true, kind: true } });
   if (!community) return { ok: false, reason: "not_found" };
@@ -268,17 +268,25 @@ export async function joinCommunity(
     return { ok: false, reason: "invalid_avatar" };
   }
 
+  // Members pick their own card number; each number goes to one card.
+  const memberNo = input.memberNo;
+  if (!Number.isInteger(memberNo) || memberNo < 1 || memberNo > MAX_MEMBER_NO) {
+    return { ok: false, reason: "invalid_member_no" };
+  }
+
   try {
     const row = await prisma.checkIn.create({
-      data: { communityId: community.id, name, xHandle, role, avatarUrl },
+      data: { communityId: community.id, name, xHandle, role, avatarUrl, memberNo },
     });
-    const memberNo = await prisma.checkIn.count({
-      where: { communityId: community.id, createdAt: { lte: row.createdAt } },
-    });
-    return { ok: true, member: toCheckInRecord(row, memberNo) };
+    return { ok: true, member: toCheckInRecord(row) };
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      return { ok: false, reason: "already_member" };
+      // Either the handle or the number is already used — check which.
+      const handleTaken = await prisma.checkIn.findUnique({
+        where: { communityId_xHandle: { communityId: community.id, xHandle } },
+        select: { id: true },
+      });
+      return { ok: false, reason: handleTaken ? "already_member" : "member_no_taken" };
     }
     throw err;
   }
@@ -299,12 +307,5 @@ export async function listCardsByHandle(rawHandle: string): Promise<{ community:
   if (rows.length === 0) return [];
 
   const communities = await toCommunityRecords(rows.map((row) => row.community));
-  return Promise.all(
-    rows.map(async (row, i) => {
-      const memberNo = await prisma.checkIn.count({
-        where: { communityId: row.communityId, createdAt: { lte: row.createdAt } },
-      });
-      return { community: communities[i], member: toCheckInRecord(row, memberNo) };
-    })
-  );
+  return rows.map((row, i) => ({ community: communities[i], member: toCheckInRecord(row) }));
 }

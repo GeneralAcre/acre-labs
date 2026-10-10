@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Users } from "lucide-react";
 import { useWallet } from "@/components/WalletProvider";
@@ -36,9 +35,8 @@ export function CreateCommunityForm() {
   const router = useRouter();
   const { address } = useWallet();
   const { sessionChecked, isAuthenticated, signingIn, authError, signIn } = useOwnerSession();
-  // Chosen in the popup before the form shows: member ID cards or event passes.
-  const [kind, setKind] = useState<CardKind | null>(null);
-  const [choosingKind, setChoosingKind] = useState(true);
+  // Member ID cards or event passes — switched at the top of the form.
+  const [kind, setKind] = useState<CardKind>("community");
   const [place, setPlace] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -148,19 +146,6 @@ export function CreateCommunityForm() {
         </button>
         {authError && <p className="text-sm text-brand-red">{authError}</p>}
       </section>
-    );
-  }
-
-  if (choosingKind || !kind) {
-    return (
-      <KindPicker
-        current={kind}
-        onPick={(picked) => {
-          setKind(picked);
-          setChoosingKind(false);
-        }}
-        onCancel={kind ? () => setChoosingKind(false) : null}
-      />
     );
   }
 
@@ -412,90 +397,15 @@ function ColorInput({ label, value, onChange }: { label: string; value: string; 
   );
 }
 
-const KINDS: { value: CardKind; title: string; blurb: string; fields: string; Icon: typeof Users }[] = [
+const KINDS: { value: CardKind; title: string; Icon: typeof Users }[] = [
   {
     value: "community",
     title: "Community card",
-    blurb: "A member ID card for an ongoing group, club or team.",
-    fields: "Name · X handle · Community · Role",
     Icon: Users,
   },
   {
     value: "event",
     title: "Event card",
-    blurb: "A pass for people who came to one event — no roles, with the place and date.",
-    fields: "Name · X handle · Event · Place · Event date",
     Icon: CalendarDays,
   },
 ];
-
-// The first step of creating: a popup asking which kind of card to make.
-function KindPicker({
-  current,
-  onPick,
-  onCancel,
-}: {
-  current: CardKind | null;
-  onPick: (kind: CardKind) => void;
-  onCancel: (() => void) | null;
-}) {
-  useEffect(() => {
-    if (!onCancel) return;
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onCancel?.();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onCancel]);
-
-  return (
-    <div className="fixed inset-0 z-[60] flex justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-sm">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="kind-picker-title"
-        className="my-auto w-full max-w-lg rounded-2xl border border-border bg-card p-5 sm:p-6"
-      >
-        <h2 id="kind-picker-title" className="text-xl font-bold tracking-tight text-foreground">
-          What are you making?
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">You can change this before you create it.</p>
-        <div className="mt-5 flex flex-col gap-3">
-          {KINDS.map(({ value, title, blurb, fields, Icon }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => onPick(value)}
-              aria-pressed={current === value}
-              className={`flex items-start gap-4 rounded-xl border p-4 text-left transition-colors hover:border-foreground/40 ${
-                current === value ? "border-foreground/60 bg-secondary" : "border-border bg-white/[0.02]"
-              }`}
-            >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground">
-                <Icon className="size-5" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-base font-semibold text-foreground">{title}</span>
-                <span className="mt-0.5 block text-sm text-muted-foreground">{blurb}</span>
-                <span className="mt-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/80">
-                  {fields}
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="mt-5 flex justify-end">
-          {onCancel ? (
-            <button type="button" onClick={onCancel} className="pill-outline-light h-10 px-4 text-sm">
-              Cancel
-            </button>
-          ) : (
-            <Link href="/content" className="pill-outline-light h-10 px-4 text-sm">
-              Cancel
-            </Link>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}

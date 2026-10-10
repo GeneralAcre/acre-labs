@@ -12,6 +12,8 @@ const inputClass =
 const labelClass = "flex flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground";
 
 const AVATAR_MAX_DIMENSION = 256;
+// Card numbers print as four digits (e.g. KU-0042).
+const MAX_MEMBER_NO = 9999;
 
 export function CommunityPage({ slug }: { slug: string }) {
   const [community, setCommunity] = useState<CommunityRecord | null>(null);
@@ -21,11 +23,22 @@ export function CommunityPage({ slug }: { slug: string }) {
   const [xHandle, setXHandle] = useState("");
   const [role, setRole] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  // The member picks their own card number; null until they type, so the
+  // field shows the lowest free number.
+  const [memberNoInput, setMemberNoInput] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [myCard, setMyCard] = useState<CheckInRecord | null>(null);
   // Fixed at mount so the preview card's date doesn't change on every keystroke.
   const [previewDate] = useState(() => Date.now());
+
+  const takenNumbers = new Set(members.map((member) => member.memberNo));
+  let nextFreeNumber = 1;
+  while (takenNumbers.has(nextFreeNumber)) nextFreeNumber++;
+  const memberNoValue = memberNoInput ?? String(nextFreeNumber);
+  const memberNo = Number(memberNoValue);
+  const memberNoValid = /^d+$/.test(memberNoValue) && memberNo >= 1 && memberNo <= MAX_MEMBER_NO;
+  const memberNoTaken = memberNoValid && takenNumbers.has(memberNo);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +80,7 @@ export function CommunityPage({ slug }: { slug: string }) {
       const res = await fetch(`/api/communities/${encodeURIComponent(slug)}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, xHandle, role, avatarUrl: avatarUrl || null }),
+        body: JSON.stringify({ name, xHandle, role, avatarUrl: avatarUrl || null, memberNo: Number(memberNoValue) }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
@@ -80,6 +93,7 @@ export function CommunityPage({ slug }: { slug: string }) {
       setXHandle("");
       setRole("");
       setAvatarUrl("");
+      setMemberNoInput(null);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -176,7 +190,7 @@ export function CommunityPage({ slug }: { slug: string }) {
             <MemberCard
               preview
               id={`preview-${community.id}`}
-              memberNo={members.length + 1}
+              memberNo={memberNoValid ? memberNo : nextFreeNumber}
               communityName={community.name}
               communityLogo={community.imageUrl}
               communitySlug={community.slug}
@@ -236,6 +250,26 @@ export function CommunityPage({ slug }: { slug: string }) {
                     />
                   </span>
                 </label>
+                <label className={labelClass}>
+                  <span>
+                    Card number{" "}
+                    <span className="font-normal normal-case tracking-normal text-muted-foreground/70">Pick any free number, 1–{MAX_MEMBER_NO}</span>
+                  </span>
+                  <input
+                    value={memberNoValue}
+                    onChange={(e) => setMemberNoInput(e.target.value.replace(/D/g, "").slice(0, 4))}
+                    inputMode="numeric"
+                    maxLength={4}
+                    required
+                    aria-invalid={!memberNoValid || memberNoTaken}
+                    className={`${inputClass} max-w-[8rem] font-mono`}
+                  />
+                  {memberNoTaken && (
+                    <span role="alert" className="text-xs font-normal normal-case tracking-normal text-brand-red">
+                      #{memberNo} is taken — next free number is {nextFreeNumber}.
+                    </span>
+                  )}
+                </label>
                 {/* Event passes have no role — the card shows the place instead. */}
                 {!event && (
                   <label className={labelClass}>
@@ -273,7 +307,7 @@ export function CommunityPage({ slug }: { slug: string }) {
                   </span>
                 </label>
                 {error && <p role="alert" className="text-sm text-brand-red">{error}</p>}
-                <button type="submit" disabled={submitting} className="pill-light h-11 self-start px-6 text-sm disabled:opacity-50">
+                <button type="submit" disabled={submitting || !memberNoValid || memberNoTaken} className="pill-light h-11 self-start px-6 text-sm disabled:opacity-50">
                   {submitting ? (event ? "Creating your pass…" : "Creating your card…") : event ? "Get my pass" : "Get my card"}
                 </button>
               </form>

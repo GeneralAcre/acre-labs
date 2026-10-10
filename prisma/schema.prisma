@@ -107,11 +107,15 @@ model CheckIn {
   // Optional title shown on the ID card (e.g. "Builder", "Speaker");
   // the card falls back to "Member".
   role        String?
+  // Picked by the member when they make their card (shown as e.g. KU-0042);
+  // unique within the community.
+  memberNo    Int
   createdAt   DateTime  @default(now())
 
   community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
 
   @@unique([communityId, xHandle])
+  @@unique([communityId, memberNo])
   @@index([communityId])
   @@index([createdAt])
 }

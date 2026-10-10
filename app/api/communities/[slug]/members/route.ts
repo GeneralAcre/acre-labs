@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth";
-import { joinCommunity } from "@/lib/communities";
+import { MAX_MEMBER_NO, joinCommunity } from "@/lib/communities";
 import { linkHandleIfUnset } from "@/lib/profiles";
 
 const ERRORS = {
@@ -12,6 +12,8 @@ const ERRORS = {
   },
   invalid_role: { message: "Role must be 30 characters or fewer.", status: 400 },
   invalid_avatar: { message: "That picture couldn't be used — try a smaller image.", status: 400 },
+  invalid_member_no: { message: `Pick a card number from 1 to ${MAX_MEMBER_NO}.`, status: 400 },
+  member_no_taken: { message: "That card number is already taken — pick another one.", status: 409 },
   already_member: { message: "That X handle already has a card in this community.", status: 409 },
 } as const;
 
@@ -27,6 +29,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     xHandle: body.xHandle,
     role: typeof body.role === "string" ? body.role : null,
     avatarUrl: typeof body.avatarUrl === "string" ? body.avatarUrl : null,
+    memberNo: Number(body.memberNo),
   });
   if (!result.ok) {
     const { message, status } = ERRORS[result.reason];

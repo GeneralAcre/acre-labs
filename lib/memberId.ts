@@ -1,7 +1,7 @@
 // Card "No:" label — the community's chosen 2-3 character prefix (or the
-// first two letters/digits of its name) plus the member's 4-digit join
-// position, e.g. "TE-0001" for the first member of Team1 Thailand. Shared by
-// the server (which assigns positions) and the card.
+// first two letters/digits of its name) plus the member's chosen 4-digit
+// card number, e.g. "TE-0001" for member #1 of Team1 Thailand. Shared by
+// the server and the card.
 export function memberIdLabel(communityName: string, memberNo: number, cardPrefix?: string | null): string {
   const prefix =
     normalizeCardPrefix(cardPrefix ?? "") ||
