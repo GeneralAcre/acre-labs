@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import type { CheckInRecord, CommunityRecord } from "@/lib/types";
 import { MemberCard } from "@/components/MemberCard";
 import { compressSquareImage } from "@/lib/image";
+import { useWallet } from "@/components/WalletProvider";
+import { useOwnerSession } from "@/lib/useOwnerSession";
 
 const inputClass =
   "font-normal normal-case tracking-normal h-11 rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 text-base text-foreground placeholder:text-muted-foreground focus:border-white/40 focus:outline-none sm:text-sm";
@@ -16,6 +18,10 @@ const AVATAR_MAX_DIMENSION = 256;
 const MAX_MEMBER_NO = 9999;
 
 export function CommunityPage({ slug }: { slug: string }) {
+  // Getting a card needs a signed-in account — that's what keeps it to one
+  // card per person per community.
+  const { address, connecting, beginConnect } = useWallet();
+  const { sessionChecked, isAuthenticated, signingIn, authError, signIn } = useOwnerSession();
   const [community, setCommunity] = useState<CommunityRecord | null>(null);
   const [members, setMembers] = useState<CheckInRecord[]>([]);
   const [stage, setStage] = useState<"loading" | "ready" | "not_found">("loading");
@@ -51,15 +57,19 @@ export function CommunityPage({ slug }: { slug: string }) {
       }
       const data = await res.json();
       if (cancelled) return;
+      const loadedMembers: CheckInRecord[] = data.members ?? [];
       setCommunity(data.community);
-      setMembers(data.members ?? []);
+      setMembers(loadedMembers);
+      // Already made a card here? Show it instead of the form.
+      setMyCard(loadedMembers.find((member) => member.id === data.myCardId) ?? null);
       setStage("ready");
     }
     load();
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+    // Re-check after signing in, so someone who already has a card sees it.
+  }, [slug, isAuthenticated]);
 
   async function handleAvatar(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -216,20 +226,38 @@ export function CommunityPage({ slug }: { slug: string }) {
             <div>
               <h2 className="text-2xl font-bold tracking-tight">You&apos;re in</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Your {event ? "pass" : "card"} is on the {community.name} wall below. Add your X handle on your profile to earn leaderboard points for it.
+                Your {event ? "pass" : "card"} is on the {community.name} wall below. It&apos;s one {event ? "pass" : "card"} per person, and it shows on your profile.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link href="/profile" className="pill-light h-11 px-5 text-sm">Go to profile</Link>
-                <button type="button" onClick={() => setMyCard(null)} className="pill-outline-light h-11 px-5 text-sm font-semibold">
-                  Make another card
-                </button>
               </div>
+            </div>
+          ) : !address ? (
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">{event ? "Get your event pass" : "Get your ID card"}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Sign in with Google, email or a wallet first — it&apos;s one {event ? "pass" : "card"} per person.
+              </p>
+              <button type="button" onClick={beginConnect} disabled={connecting} className="pill-light mt-5 h-11 px-6 text-sm disabled:opacity-50">
+                {connecting ? "Signing in…" : "Sign in"}
+              </button>
+            </div>
+          ) : !sessionChecked ? null : !isAuthenticated ? (
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">{event ? "Get your event pass" : "Get your ID card"}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                One signature, no gas — it&apos;s how we keep it to one {event ? "pass" : "card"} per person.
+              </p>
+              <button type="button" onClick={signIn} disabled={signingIn} className="pill-light mt-5 h-11 px-6 text-sm disabled:opacity-50">
+                {signingIn ? "Check your wallet…" : "Confirm sign-in"}
+              </button>
+              {authError && <p role="alert" className="mt-3 text-sm text-brand-red">{authError}</p>}
             </div>
           ) : (
             <>
               <h2 className="text-2xl font-bold tracking-tight">{event ? "Get your event pass" : "Get your ID card"}</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Fill in your details — the card on the left updates as you type. No wallet needed.
+                Fill in your details — the card on the left updates as you type. One {event ? "pass" : "card"} per person.
               </p>
               <form onSubmit={handleSubmit} className="mt-6 flex max-w-md flex-col gap-4">
                 <label className={labelClass}>

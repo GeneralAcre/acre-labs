@@ -75,6 +75,13 @@ export async function connectWallet(preferred?: Eip1193Provider | null): Promise
     return accounts[0];
   } catch (err) {
     if (err instanceof Web3ClaimError) throw err;
+    // -32002: the wallet already has a connect popup open for this site
+    // (often hidden behind the browser window, or waiting on an unlock).
+    if (isProviderRpcError(err) && err.code === -32002) {
+      throw new Web3ClaimError(
+        "Your wallet already has a connection request open. Click the wallet icon in your browser toolbar to approve it."
+      );
+    }
     const message = err instanceof Error ? err.message : "Failed to connect wallet.";
     throw new Web3ClaimError(message);
   }

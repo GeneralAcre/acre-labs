@@ -110,12 +110,16 @@ model CheckIn {
   // Picked by the member when they make their card (shown as e.g. KU-0042);
   // unique within the community.
   memberNo    Int
+  // Signed-in wallet that made the card — one card per person per community.
+  // Null only for cards made before sign-in was required.
+  ownerAddress String?
   createdAt   DateTime  @default(now())
 
   community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
 
   @@unique([communityId, xHandle])
   @@unique([communityId, memberNo])
+  @@unique([communityId, ownerAddress])
   @@index([communityId])
   @@index([createdAt])
 }

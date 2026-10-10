@@ -243,11 +243,13 @@ export type JoinFailure =
   | "invalid_avatar"
   | "invalid_member_no"
   | "member_no_taken"
+  | "already_has_card"
   | "already_member";
 export type JoinResult = { ok: true; member: CheckInRecord } | { ok: false; reason: JoinFailure };
 
 export async function joinCommunity(
   slug: string,
+  ownerAddress: string,
   input: { name: string; xHandle: string; role?: string | null; avatarUrl?: string | null; memberNo: number }
 ): Promise<JoinResult> {
   const community = await prisma.community.findUnique({ where: { slug }, select: { id: true, kind: true } });
@@ -274,14 +276,19 @@ export async function joinCommunity(
     return { ok: false, reason: "invalid_member_no" };
   }
 
+  // One card per signed-in person per community.
+  const owner = ownerAddress.toLowerCase();
+  if (await findCardByOwner(community.id, owner)) return { ok: false, reason: "already_has_card" };
+
   try {
     const row = await prisma.checkIn.create({
-      data: { communityId: community.id, name, xHandle, role, avatarUrl, memberNo },
+      data: { communityId: community.id, name, xHandle, role, avatarUrl, memberNo, ownerAddress: owner },
     });
     return { ok: true, member: toCheckInRecord(row) };
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      // Either the handle or the number is already used — check which.
+      // The person, handle or number is already used — check which.
+      if (await findCardByOwner(community.id, owner)) return { ok: false, reason: "already_has_card" };
       const handleTaken = await prisma.checkIn.findUnique({
         where: { communityId_xHandle: { communityId: community.id, xHandle } },
         select: { id: true },
@@ -290,6 +297,22 @@ export async function joinCommunity(
     }
     throw err;
   }
+}
+
+function findCardByOwner(communityId: string, ownerAddress: string) {
+  return prisma.checkIn.findUnique({
+    where: { communityId_ownerAddress: { communityId, ownerAddress } },
+    select: { id: true },
+  });
+}
+
+// The card the signed-in wallet already made in this community, if any.
+export async function findMyCardId(slug: string, ownerAddress: string): Promise<string | null> {
+  const row = await prisma.checkIn.findFirst({
+    where: { community: { slug }, ownerAddress: ownerAddress.toLowerCase() },
+    select: { id: true },
+  });
+  return row?.id ?? null;
 }
 
 // Every member card made with this X handle, across all communities, with the

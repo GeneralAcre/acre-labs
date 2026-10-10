@@ -225,7 +225,7 @@ export function WalletButton({
       {error && !isChooserOpen && (
         <p className="absolute right-0 top-full z-20 mt-2 w-56 rounded-lg border border-brand-red/30 bg-popover p-2 text-xs text-brand-red shadow-lg">
           {error}{" "}
-          {!error.startsWith("Email sign-in") && (
+          {error.startsWith("No wallet found") && (
             <a
               href="https://core.app/tools"
               target="_blank"

@@ -14,6 +14,7 @@ const ERRORS = {
   invalid_avatar: { message: "That picture couldn't be used — try a smaller image.", status: 400 },
   invalid_member_no: { message: `Pick a card number from 1 to ${MAX_MEMBER_NO}.`, status: 400 },
   member_no_taken: { message: "That card number is already taken — pick another one.", status: 409 },
+  already_has_card: { message: "You already have a card here — it's one card per person.", status: 409 },
   already_member: { message: "That X handle already has a card in this community.", status: 409 },
 } as const;
 
@@ -24,7 +25,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "name and xHandle are required" }, { status: 400 });
   }
 
-  const result = await joinCommunity(slug, {
+  // Signing in is what limits each person to one card per community.
+  const owner = verifySessionToken(request.cookies.get(SESSION_COOKIE_NAME)?.value);
+  if (!owner) {
+    return NextResponse.json({ error: "Sign in to get your card." }, { status: 401 });
+  }
+
+  const result = await joinCommunity(slug, owner, {
     name: body.name,
     xHandle: body.xHandle,
     role: typeof body.role === "string" ? body.role : null,
@@ -36,10 +43,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: message }, { status });
   }
 
-  // No wallet is needed to make a card, but if the maker is signed in, link
-  // the card's handle to their profile so it shows up there.
-  const owner = verifySessionToken(request.cookies.get(SESSION_COOKIE_NAME)?.value);
-  if (owner) await linkHandleIfUnset(owner, result.member.xHandle);
+  // Link the card's handle to the maker's profile so it shows up there.
+  await linkHandleIfUnset(owner, result.member.xHandle);
 
   return NextResponse.json({ member: result.member }, { status: 201 });
 }
