@@ -2,11 +2,12 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { toPng } from "html-to-image";
+import { toBlob } from "html-to-image";
 import { Download, ExternalLink, X } from "lucide-react";
 import { Identicon } from "./Identicon";
 import { DEFAULT_ACCENT_COLOR, DEFAULT_CARD_COLOR, readableTextOn } from "@/lib/color";
 import { memberIdLabel } from "@/lib/memberId";
+import type { CardKind } from "@/lib/types";
 
 function formatDate(ms: number): string {
   const d = new Date(ms);
@@ -118,6 +119,11 @@ export function MemberCard({
   memberNo,
   communityName,
   communityLogo = null,
+  communitySlug = null,
+  cardPrefix = null,
+  cardImage = null,
+  kind = "community",
+  place = null,
   name,
   xHandle,
   avatarUrl,
@@ -135,6 +141,16 @@ export function MemberCard({
   communityName: string;
   // Optional logo shown bare (no frame) beside the headline.
   communityLogo?: string | null;
+  // Where "Share on X" links to; the community page when known.
+  communitySlug?: string | null;
+  // Creator-chosen "No:" prefix; null uses the first letters of the name.
+  cardPrefix?: string | null;
+  // Optional background picture, drawn under a wash of cardColor.
+  cardImage?: string | null;
+  // Event cards swap Community/Role for Event/Place and read as a pass.
+  kind?: CardKind;
+  // Event venue, shown on event cards.
+  place?: string | null;
   name: string;
   xHandle: string;
   avatarUrl: string | null;
@@ -147,20 +163,29 @@ export function MemberCard({
   preview?: boolean;
   className?: string;
 }) {
-  const number = memberIdLabel(communityName, memberNo);
+  const number = memberIdLabel(communityName, memberNo, cardPrefix);
   const ink = readableTextOn(cardColor);
   const stripInk = readableTextOn(accentColor);
+  const event = kind === "event";
 
   const body = (
     <div
       className="relative flex aspect-[1.55/1] w-full flex-col overflow-hidden rounded-[3.5cqw]"
-      style={{ backgroundColor: cardColor, color: ink }}
+      style={{
+        backgroundColor: cardColor,
+        // A background picture sits under a 35% wash of the card color, so the
+        // text color picked for cardColor stays readable on top of it.
+        backgroundImage: cardImage ? `linear-gradient(${cardColor}59, ${cardColor}59), url("${cardImage}")` : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        color: ink,
+      }}
     >
       <div className="flex flex-1 gap-[4cqw] px-[4.5cqw] pt-[4cqw]">
         {/* Photo + barcode */}
         <div className="flex w-[31%] shrink-0 flex-col">
           <p className="text-[1.6cqw] font-semibold uppercase leading-tight">
-            Identification card
+            {event ? "Event pass" : "Identification card"}
             <br />
             No: {number}
           </p>
@@ -188,7 +213,7 @@ export function MemberCard({
         {/* Headline + fields */}
         <div className="flex min-w-0 flex-1 flex-col">
           <p className="text-right font-serif text-[2.6cqw] lowercase italic leading-none opacity-70">
-            member id card
+            {event ? "event pass" : "member id card"}
           </p>
           <div className="mt-[1cqw] flex min-w-0 items-center gap-[1.8cqw]">
             {communityLogo ? (
@@ -209,16 +234,29 @@ export function MemberCard({
           <div className="mt-auto grid grid-cols-2 gap-x-[3cqw] gap-y-[2.6cqw] pb-[1.5cqw]">
             <Field label="Name" value={name} />
             <Field label="X handle" value={`@${xHandle}`} />
-            <Field label="Community" value={communityName} />
-            <Field label="Role" value={role || "Member"} />
+            {event ? (
+              <>
+                <Field label="Event" value={communityName} />
+                <Field label="Place" value={place || "—"} />
+              </>
+            ) : (
+              <>
+                <Field label="Community" value={communityName} />
+                <Field label="Role" value={role || "Member"} />
+              </>
+            )}
           </div>
 
           <div className="flex items-end justify-between gap-[2cqw] border-t border-current/25 pb-[2.4cqw] pt-[1.2cqw] text-[1.5cqw] font-semibold uppercase leading-tight">
-            <span>Date of issue {formatDate(issuedAt ?? joinedAt)}</span>
+            <span>
+              {event ? "Event date" : "Date of issue"} {formatDate(issuedAt ?? joinedAt)}
+            </span>
             <span className="text-right">
               Issued on AcreLabs
               <br />
-              <span className="font-normal normal-case">the holder of this card is a community member</span>
+              <span className="font-normal normal-case">
+                {event ? "the holder of this pass attended this event" : "the holder of this card is a community member"}
+              </span>
             </span>
           </div>
         </div>
@@ -230,7 +268,7 @@ export function MemberCard({
         style={{ backgroundColor: accentColor, color: stripInk, borderColor: ink }}
       >
         <FitText text={communityName} maxSize={2.4} minSize={1.4} className="flex-1 uppercase leading-none" />
-        <span className="shrink-0">Verified member · AcreLabs</span>
+        <span className="shrink-0">{event ? "Verified attendee" : "Verified member"} · AcreLabs</span>
       </div>
     </div>
   );
@@ -242,27 +280,87 @@ export function MemberCard({
     return <div className={frame}>{body}</div>;
   }
   return (
-    <CardViewer body={body} fileName={`${number}-${xHandle}`} xHandle={xHandle} frameClassName={frame} />
+    <CardViewer
+      body={body}
+      fileName={`${number}-${xHandle}`}
+      xHandle={xHandle}
+      shareText={
+        event
+          ? `I was at ${communityName} 🎟️ Pass ${number} — get yours on AcreLabs`
+          : `I'm member ${number} of ${communityName} 🪪 Get your ID card on AcreLabs`
+      }
+      sharePath={communitySlug ? `/content/${communitySlug}` : "/content"}
+      frameClassName={frame}
+    />
+  );
+}
+
+async function renderCardPng(node: HTMLElement): Promise<Blob> {
+  // 3x pixel ratio for a crisp, print-friendly image.
+  const options = { pixelRatio: 3, cacheBust: true };
+  // Safari often leaves images out of the first render, so warm it up once.
+  await toBlob(node, options).catch(() => null);
+  const blob = await toBlob(node, options);
+  if (!blob) throw new Error("Empty image");
+  return blob;
+}
+
+function saveBlob(blob: Blob, name: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+function isTouchDevice() {
+  return window.matchMedia("(pointer: coarse)").matches;
+}
+
+function XLogo({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
   );
 }
 
 // A real (non-preview) card is clickable: it opens large in a dialog where it
-// can be downloaded as a PNG or followed through to the member's X profile.
+// can be downloaded as a PNG, shared to X, or followed through to the
+// member's X profile.
 function CardViewer({
   body,
   fileName,
   xHandle,
+  shareText,
+  sharePath,
   frameClassName,
 }: {
   body: ReactNode;
   fileName: string;
   xHandle: string;
+  shareText: string;
+  sharePath: string;
   frameClassName: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [busy, setBusy] = useState<"download" | "share" | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saveUrl, setSaveUrl] = useState<string | null>(null);
   const captureRef = useRef<HTMLDivElement>(null);
+  const pngRef = useRef<Promise<Blob> | null>(null);
+
+  function openViewer() {
+    pngRef.current = null;
+    setSaveUrl(null);
+    setError(null);
+    setNotice(null);
+    setOpen(true);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -278,21 +376,103 @@ function CardViewer({
     };
   }, [open]);
 
+  // Render the PNG as soon as the dialog opens, so tapping Download can hand
+  // the file to the share sheet straight away — mobile browsers only allow
+  // navigator.share() while the tap is still "fresh", which a slow render
+  // inside the click handler would use up.
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    const frame = requestAnimationFrame(() => {
+      if (!captureRef.current || cancelled) return;
+      const job = renderCardPng(captureRef.current);
+      pngRef.current = job;
+      job.catch(() => {
+        if (!cancelled) pngRef.current = null;
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!saveUrl) return;
+    return () => URL.revokeObjectURL(saveUrl);
+  }, [saveUrl]);
+
+  async function cardFile(node: HTMLElement): Promise<File> {
+    if (!pngRef.current) pngRef.current = renderCardPng(node);
+    try {
+      return new File([await pngRef.current], `${fileName}.png`, { type: "image/png" });
+    } catch (err) {
+      pngRef.current = null;
+      throw err;
+    }
+  }
+
+  // Phones: the share sheet offers "Save Image" plus every app, X included,
+  // with the card attached. Returns false when it isn't available.
+  async function shareFile(file: File, text?: string): Promise<boolean> {
+    if (!isTouchDevice() || !navigator.canShare?.({ files: [file] })) return false;
+    try {
+      await navigator.share(text ? { files: [file], text } : { files: [file] });
+    } catch (err) {
+      // Cancelling the sheet is fine; anything else (e.g. the tap expired)
+      // falls back to the caller's next option.
+      if (!(err instanceof DOMException && err.name === "AbortError")) return false;
+    }
+    return true;
+  }
+
   async function download() {
     if (!captureRef.current) return;
     setError(null);
-    setDownloading(true);
+    setNotice(null);
+    setBusy("download");
     try {
-      // 3x pixel ratio for a crisp, print-friendly image.
-      const dataUrl = await toPng(captureRef.current, { pixelRatio: 3, cacheBust: true });
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = `${fileName}.png`;
-      link.click();
+      const file = await cardFile(captureRef.current);
+      if (await shareFile(file)) return;
+      if (isTouchDevice()) {
+        // In-app browsers (X, LINE, Instagram) and iOS ignore download
+        // links; showing the image lets the person press and hold to save.
+        setSaveUrl(URL.createObjectURL(file));
+        return;
+      }
+      saveBlob(file, file.name);
     } catch {
       setError("Couldn't create the image. Please try again.");
     } finally {
-      setDownloading(false);
+      setBusy(null);
+    }
+  }
+
+  async function shareOnX() {
+    if (!captureRef.current) return;
+    setError(null);
+    setNotice(null);
+    const link = new URL(sharePath, window.location.origin).toString();
+    const intent = `https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(link)}`;
+
+    // X's post link can't carry an image. On phones, share the PNG itself and
+    // let the person pick X; elsewhere open the post right away (before any
+    // await, or the popup is blocked) and download the card to attach.
+    const touch = isTouchDevice();
+    if (!touch) window.open(intent, "_blank", "noopener,noreferrer");
+    setBusy("share");
+    try {
+      const file = await cardFile(captureRef.current);
+      if (touch) {
+        if (!(await shareFile(file, `${shareText} ${link}`))) window.location.href = intent;
+        return;
+      }
+      saveBlob(file, file.name);
+      setNotice("Your card was downloaded — attach it to your post on X.");
+    } catch {
+      setError("Couldn't create the image. Please try again.");
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -303,11 +483,11 @@ function CardViewer({
       <div
         role="button"
         tabIndex={0}
-        onClick={() => setOpen(true)}
+        onClick={openViewer}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            setOpen(true);
+            openViewer();
           }
         }}
         aria-label="Open member card"
@@ -322,10 +502,10 @@ function CardViewer({
             role="dialog"
             aria-modal="true"
             aria-label="Member card"
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] flex justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           >
-            <div className="flex w-full max-w-2xl flex-col gap-4" onClick={(event) => event.stopPropagation()}>
+            <div className="my-auto flex w-full max-w-2xl flex-col gap-4" onClick={(event) => event.stopPropagation()}>
               <div className="flex justify-end">
                 <button
                   type="button"
@@ -337,14 +517,33 @@ function CardViewer({
                 </button>
               </div>
 
-              <div ref={captureRef} className="w-full [container-type:inline-size]">
-                {body}
+              <div className="relative">
+                <div ref={captureRef} className="w-full [container-type:inline-size]">
+                  {body}
+                </div>
+                {saveUrl && (
+                  // The rendered PNG laid over the card, so press-and-hold saves the real file.
+                  // eslint-disable-next-line @next/next/no-img-element -- local blob: URL
+                  <img src={saveUrl} alt="Member card" className="absolute inset-0 h-full w-full [-webkit-touch-callout:default]" />
+                )}
               </div>
+              {saveUrl && (
+                <p className="text-center text-sm text-white/80">Press and hold the card, then choose Save to Photos.</p>
+              )}
 
               <div className="flex flex-wrap items-center justify-center gap-3">
-                <button type="button" onClick={download} disabled={downloading} className="pill-light h-11 gap-2 px-5 text-sm disabled:opacity-50">
+                <button type="button" onClick={download} disabled={busy !== null} className="pill-light h-11 gap-2 px-5 text-sm disabled:opacity-50">
                   <Download className="size-4" />
-                  {downloading ? "Preparing…" : "Download PNG"}
+                  {busy === "download" ? "Preparing…" : "Download PNG"}
+                </button>
+                <button
+                  type="button"
+                  onClick={shareOnX}
+                  disabled={busy !== null}
+                  className="pill-outline-light h-11 gap-2 bg-black/40 px-5 text-sm font-semibold disabled:opacity-50"
+                >
+                  <XLogo className="size-3.5" />
+                  {busy === "share" ? "Preparing…" : "Share on X"}
                 </button>
                 <a
                   href={`https://x.com/${xHandle}`}
@@ -356,6 +555,7 @@ function CardViewer({
                   View @{xHandle} on X
                 </a>
               </div>
+              {notice && <p className="text-center text-sm text-white/80">{notice}</p>}
               {error && <p className="text-center text-sm text-brand-red">{error}</p>}
             </div>
           </div>,

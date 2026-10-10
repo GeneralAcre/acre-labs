@@ -105,7 +105,9 @@ export function CommunityPage({ slug }: { slug: string }) {
     );
   }
 
-  const memberLabel = `${members.length} member${members.length === 1 ? "" : "s"}`;
+  const event = community.kind === "event";
+  const person = event ? "attendee" : "member";
+  const memberLabel = `${members.length} ${person}${members.length === 1 ? "" : "s"}`;
 
   return (
     <main className="flex flex-1 flex-col bg-background">
@@ -120,7 +122,7 @@ export function CommunityPage({ slug }: { slug: string }) {
             <img src={community.imageUrl} alt="" className="size-14 shrink-0 rounded-xl border border-border bg-black/40 object-contain p-1.5 sm:size-16" />
           ) : null}
           <div className="min-w-0">
-            <span className="brand-kicker text-muted-foreground">Community</span>
+            <span className="brand-kicker text-muted-foreground">{event ? "Event" : "Community"}</span>
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{community.name}</h1>
           </div>
         </div>
@@ -146,15 +148,20 @@ export function CommunityPage({ slug }: { slug: string }) {
       </header>
 
       {/* Card left, form right */}
-      <section className="mx-auto grid w-full max-w-[1400px] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-10">
+      <section className="mx-auto grid grid-cols-1 w-full max-w-[1400px] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-10">
         <div className="flex flex-col items-center justify-center gap-4 rounded-2xl bg-[radial-gradient(ellipse_at_50%_35%,rgba(60,131,246,0.14),transparent_65%)] py-6">
-          <span className="brand-kicker text-muted-foreground">{myCard ? "Your ID card" : "Live preview"}</span>
+          <span className="brand-kicker text-muted-foreground">{myCard ? (event ? "Your event pass" : "Your ID card") : "Live preview"}</span>
           {myCard ? (
             <MemberCard
               id={myCard.id}
               memberNo={myCard.memberNo}
               communityName={community.name}
               communityLogo={community.imageUrl}
+              communitySlug={community.slug}
+              cardPrefix={community.cardPrefix}
+              cardImage={community.cardImage}
+              kind={community.kind}
+              place={community.place}
               cardColor={community.cardColor}
               accentColor={community.accentColor}
               issuedAt={community.issueDate}
@@ -172,6 +179,11 @@ export function CommunityPage({ slug }: { slug: string }) {
               memberNo={members.length + 1}
               communityName={community.name}
               communityLogo={community.imageUrl}
+              communitySlug={community.slug}
+              cardPrefix={community.cardPrefix}
+              cardImage={community.cardImage}
+              kind={community.kind}
+              place={community.place}
               cardColor={community.cardColor}
               accentColor={community.accentColor}
               issuedAt={community.issueDate}
@@ -190,7 +202,7 @@ export function CommunityPage({ slug }: { slug: string }) {
             <div>
               <h2 className="text-2xl font-bold tracking-tight">You&apos;re in</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Your card is on the {community.name} wall below. Add your X handle on your profile to earn leaderboard points for it.
+                Your {event ? "pass" : "card"} is on the {community.name} wall below. Add your X handle on your profile to earn leaderboard points for it.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link href="/profile" className="pill-light h-11 px-5 text-sm">Go to profile</Link>
@@ -201,7 +213,7 @@ export function CommunityPage({ slug }: { slug: string }) {
             </div>
           ) : (
             <>
-              <h2 className="text-2xl font-bold tracking-tight">Get your ID card</h2>
+              <h2 className="text-2xl font-bold tracking-tight">{event ? "Get your event pass" : "Get your ID card"}</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 Fill in your details — the card on the left updates as you type. No wallet needed.
               </p>
@@ -224,12 +236,15 @@ export function CommunityPage({ slug }: { slug: string }) {
                     />
                   </span>
                 </label>
-                <label className={labelClass}>
-                  <span>
-                    Role <span className="font-normal normal-case tracking-normal text-muted-foreground/70">Optional · e.g. Builder, Speaker</span>
-                  </span>
-                  <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Member" maxLength={30} className={inputClass} />
-                </label>
+                {/* Event passes have no role — the card shows the place instead. */}
+                {!event && (
+                  <label className={labelClass}>
+                    <span>
+                      Role <span className="font-normal normal-case tracking-normal text-muted-foreground/70">Optional · e.g. Builder, Speaker</span>
+                    </span>
+                    <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Member" maxLength={30} className={inputClass} />
+                  </label>
+                )}
                 <label className={labelClass}>
                   <span>
                     Profile picture{" "}
@@ -259,7 +274,7 @@ export function CommunityPage({ slug }: { slug: string }) {
                 </label>
                 {error && <p role="alert" className="text-sm text-brand-red">{error}</p>}
                 <button type="submit" disabled={submitting} className="pill-light h-11 self-start px-6 text-sm disabled:opacity-50">
-                  {submitting ? "Creating your card…" : "Get my card"}
+                  {submitting ? (event ? "Creating your pass…" : "Creating your card…") : event ? "Get my pass" : "Get my card"}
                 </button>
               </form>
             </>
@@ -270,12 +285,12 @@ export function CommunityPage({ slug }: { slug: string }) {
       {/* Member wall */}
       <section className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-12 sm:px-6">
         <div className="mb-4 flex items-end justify-between gap-3">
-          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Members</h2>
+          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">{event ? "Attendees" : "Members"}</h2>
           <span className="text-xs font-medium text-muted-foreground">{memberLabel}</span>
         </div>
         {members.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
-            No member cards yet — be the first.
+            No {event ? "passes" : "member cards"} yet — be the first.
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
@@ -286,6 +301,11 @@ export function CommunityPage({ slug }: { slug: string }) {
                 memberNo={member.memberNo}
                 communityName={community.name}
                 communityLogo={community.imageUrl}
+                communitySlug={community.slug}
+                cardPrefix={community.cardPrefix}
+                cardImage={community.cardImage}
+                kind={community.kind}
+                place={community.place}
                 cardColor={community.cardColor}
                 accentColor={community.accentColor}
                 issuedAt={community.issueDate}

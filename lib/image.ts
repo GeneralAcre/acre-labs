@@ -56,6 +56,56 @@ function clamp(value: number, min: number, max: number): number {
 // left in frame get flattened to opaque black on encode, which is what
 // turned a slim transparent margin into a visible black ring inside the
 // circular frame.
+// Member card backgrounds: cropped (cover, centered) to the card's 1.55:1
+// shape, downsized and re-encoded as JPEG to keep the data: URI small. Also
+// returns the picture's average color, which the card uses as its tint and
+// to pick readable text.
+export const CARD_ASPECT = 1.55;
+const CARD_BACKGROUND_WIDTH = 1240;
+
+export async function compressCardBackground(file: File): Promise<{ dataUrl: string; averageColor: string }> {
+  if (file.size > BADGE_SOURCE_MAX_BYTES) {
+    throw new Error("Image is too large. Please choose a file under 20MB.");
+  }
+  const bitmap = await createImageBitmap(file);
+
+  let sw = bitmap.width;
+  let sh = bitmap.width / CARD_ASPECT;
+  if (sh > bitmap.height) {
+    sh = bitmap.height;
+    sw = bitmap.height * CARD_ASPECT;
+  }
+  const sx = (bitmap.width - sw) / 2;
+  const sy = (bitmap.height - sh) / 2;
+
+  const width = Math.round(Math.min(sw, CARD_BACKGROUND_WIDTH));
+  const height = Math.round(width / CARD_ASPECT);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Image compression isn't supported in this browser.");
+  // JPEG has no alpha: flatten transparent pictures onto white, not black.
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, width, height);
+  bitmap.close();
+
+  const { data } = ctx.getImageData(0, 0, width, height);
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  const pixels = data.length / 4;
+  for (let i = 0; i < data.length; i += 4) {
+    r += data[i];
+    g += data[i + 1];
+    b += data[i + 2];
+  }
+  const hex = (sum: number) => Math.round(sum / pixels).toString(16).padStart(2, "0");
+
+  return { dataUrl: canvas.toDataURL("image/jpeg", 0.82), averageColor: `#${hex(r)}${hex(g)}${hex(b)}` };
+}
+
 export async function compressSquareImage(file: File, maxDimension = BADGE_MAX_DIMENSION): Promise<string> {
   if (file.size > BADGE_SOURCE_MAX_BYTES) {
     throw new Error("Image is too large. Please choose a file under 20MB.");

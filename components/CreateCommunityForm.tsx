@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CalendarDays, Users } from "lucide-react";
 import { useWallet } from "@/components/WalletProvider";
 import { MemberCard } from "@/components/MemberCard";
 import { useOwnerSession } from "@/lib/useOwnerSession";
-import { compressSquareImage } from "@/lib/image";
+import { compressCardBackground, compressSquareImage } from "@/lib/image";
 import { DEFAULT_ACCENT_COLOR, DEFAULT_CARD_COLOR } from "@/lib/color";
+import { CARD_PREFIX_RE, memberIdLabel, normalizeCardPrefix } from "@/lib/memberId";
+import type { CardKind } from "@/lib/types";
 
 // Starting points for the card template — same layout, different colors,
 // like a school ID restyled each year. Creators can also pick any color.
@@ -32,15 +36,56 @@ export function CreateCommunityForm() {
   const router = useRouter();
   const { address } = useWallet();
   const { sessionChecked, isAuthenticated, signingIn, authError, signIn } = useOwnerSession();
+  // Chosen in the popup before the form shows: member ID cards or event passes.
+  const [kind, setKind] = useState<CardKind | null>(null);
+  const [choosingKind, setChoosingKind] = useState(true);
+  const [place, setPlace] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [cardColor, setCardColor] = useState(DEFAULT_CARD_COLOR);
   const [accentColor, setAccentColor] = useState(DEFAULT_ACCENT_COLOR);
   const [issueDate, setIssueDate] = useState("");
+  const [cardPrefix, setCardPrefix] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewDate] = useState(() => Date.now());
+  const prefixInvalid = cardPrefix !== "" && !CARD_PREFIX_RE.test(cardPrefix);
+  const [cardImage, setCardImage] = useState("");
+  // Result of the last "is this name free?" check, tied to the name it was for
+  // so a stale answer never shows against what's typed now.
+  const [nameCheck, setNameCheck] = useState<{ name: string; takenBy: string | null }>({ name: "", takenBy: null });
+  const trimmedName = name.trim();
+  const nameTakenBy = nameCheck.name === trimmedName ? nameCheck.takenBy : null;
+
+  useEffect(() => {
+    if (!trimmedName) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const res = await fetch(`/api/communities?name=${encodeURIComponent(trimmedName)}`).catch(() => null);
+      const data = await res?.json().catch(() => null);
+      if (!cancelled && data) setNameCheck({ name: trimmedName, takenBy: data.takenBy ?? null });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [trimmedName]);
+
+  async function handleCardImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    try {
+      const { dataUrl, averageColor } = await compressCardBackground(file);
+      setCardImage(dataUrl);
+      // Tint with the picture's own average color so the wash is subtle and
+      // the text color (picked from it) reads well on the picture.
+      setCardColor(averageColor);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't use that image.");
+    }
+  }
 
   async function handleLogo(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -61,20 +106,24 @@ export function CreateCommunityForm() {
       const res = await fetch("/api/communities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, cardColor, accentColor, issueDate, imageUrl: imageUrl || undefined }),
+        body: JSON.stringify({ name, description, cardColor, accentColor, issueDate, cardPrefix, kind, place, cardImage: cardImage || undefined, imageUrl: imageUrl || undefined }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(data?.error ?? "Couldn't create the community.");
+        setError(data?.error ?? `Couldn't create the ${noun}.`);
         return;
       }
       router.push(`/content/${data.community.slug}`);
     } catch {
-      setError("Couldn't create the community.");
+      setError(`Couldn't create the ${noun}.`);
     } finally {
       setSubmitting(false);
     }
   }
+
+  const event = kind === "event";
+  const noun = event ? "event" : "community";
+  const previewName = trimmedName || (event ? "Your event" : "Your community");
 
   if (!address) {
     return (
@@ -102,12 +151,55 @@ export function CreateCommunityForm() {
     );
   }
 
+  if (choosingKind || !kind) {
+    return (
+      <KindPicker
+        current={kind}
+        onPick={(picked) => {
+          setKind(picked);
+          setChoosingKind(false);
+        }}
+        onCancel={kind ? () => setChoosingKind(false) : null}
+      />
+    );
+  }
+
   return (
-    <section className="mx-auto grid w-full max-w-[1400px] flex-1 gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:grid-cols-[1fr_440px]">
+    <section className="mx-auto grid grid-cols-1 w-full max-w-[1400px] flex-1 gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:grid-cols-[minmax(0,1fr)_440px]">
       <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-5">
+        <div role="radiogroup" aria-label="Card type" className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-card p-1">
+          {KINDS.map(({ value, title, Icon }) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={kind === value}
+              onClick={() => setKind(value)}
+              className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors ${
+                kind === value ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon className="size-4" />
+              {title}
+            </button>
+          ))}
+        </div>
         <label className={labelClass}>
-          Community name
-          <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} required placeholder="e.g. Team1 Thailand" className={inputClass} />
+          {event ? "Event name" : "Community name"}
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={60}
+            required
+            placeholder={event ? "e.g. Team1 x KU: Intro to Blockchain" : "e.g. Team1 Thailand"}
+            aria-invalid={nameTakenBy !== null}
+            className={inputClass}
+          />
+          {nameTakenBy && (
+            <span role="alert" className="text-xs font-normal normal-case tracking-normal text-brand-red">
+              &ldquo;{nameTakenBy}&rdquo; already exists — pick a different name.
+            </span>
+          )}
         </label>
         <label className={labelClass}>
           Description <span className="font-normal normal-case tracking-normal text-muted-foreground/70">Optional</span>
@@ -116,7 +208,7 @@ export function CreateCommunityForm() {
             onChange={(e) => setDescription(e.target.value)}
             maxLength={280}
             rows={3}
-            placeholder="What's this community about?"
+            placeholder={event ? "What's this event about?" : "What's this community about?"}
             className="font-normal normal-case tracking-normal resize-none rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:border-white/40 focus:outline-none sm:text-sm"
           />
         </label>
@@ -149,11 +241,28 @@ export function CreateCommunityForm() {
           </span>
         </label>
 
+        {event && (
+          <label className={labelClass}>
+            <span>
+              Place <span className="font-normal normal-case tracking-normal text-muted-foreground/70">Optional · printed on every pass</span>
+            </span>
+            <input
+              value={place}
+              onChange={(e) => setPlace(e.target.value)}
+              maxLength={80}
+              placeholder="e.g. Kasetsart University, Bangkok"
+              className={inputClass}
+            />
+          </label>
+        )}
+
         <label className={labelClass}>
           <span>
-            Date of issue{" "}
+            {event ? "Event date" : "Date of issue"}{" "}
             <span className="font-normal normal-case tracking-normal text-muted-foreground/70">
-              Optional · printed on every card — leave empty to use each member&apos;s join date
+              {event
+                ? "Optional · printed on every pass — leave empty to use the day each person gets theirs"
+                : "Optional · printed on every card — leave empty to use each member’s join date"}
             </span>
           </span>
           <input
@@ -164,11 +273,58 @@ export function CreateCommunityForm() {
           />
         </label>
 
+        <label className={labelClass}>
+          <span>
+            Card number prefix{" "}
+            <span className="font-normal normal-case tracking-normal text-muted-foreground/70">
+              Optional · 2–3 letters or numbers — {event ? "passes" : "members"} are numbered in join order, e.g.{" "}
+              {memberIdLabel(previewName, 1, cardPrefix)},{" "}
+              {memberIdLabel(previewName, 2, cardPrefix)}…
+            </span>
+          </span>
+          <input
+            value={cardPrefix}
+            onChange={(e) => setCardPrefix(normalizeCardPrefix(e.target.value))}
+            maxLength={3}
+            placeholder={memberIdLabel(previewName, 1).split("-")[0]}
+            aria-invalid={prefixInvalid}
+            className={`${inputClass} max-w-[8rem] font-mono uppercase`}
+          />
+          {prefixInvalid && (
+            <span className="text-xs font-normal normal-case tracking-normal text-brand-red">Use at least 2 characters.</span>
+          )}
+        </label>
+
         <fieldset className="flex flex-col gap-3">
           <legend className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Card design</legend>
           <p className="-mt-1 text-xs text-muted-foreground/70">
-            Every card keeps the same ID layout — pick the colors for this event.
+            Every card keeps the same ID layout — pick the colors for this event, or use a picture as the background.
           </p>
+          <label className="flex flex-col gap-2">
+            <span className="text-xs text-muted-foreground">
+              Background picture{" "}
+              <span className="text-muted-foreground/70">Optional · landscape, at least 1240 × 800 px — cropped to the card</span>
+            </span>
+            <span className="flex items-center gap-4 rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3">
+              {cardImage ? (
+                // eslint-disable-next-line @next/next/no-img-element -- local data: URI preview
+                <img src={cardImage} alt="" className="h-10 w-[62px] rounded object-cover" />
+              ) : (
+                <span className="h-10 w-[62px] rounded bg-white/[0.06]" />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCardImage}
+                className="min-w-0 flex-1 text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
+              />
+              {cardImage && (
+                <button type="button" onClick={() => setCardImage("")} className="text-xs text-muted-foreground hover:text-foreground">
+                  Remove
+                </button>
+              )}
+            </span>
+          </label>
           <div className="flex flex-wrap gap-2">
             {PRESETS.map((preset) => {
               const selected = preset.card === cardColor && preset.accent === accentColor;
@@ -196,15 +352,15 @@ export function CreateCommunityForm() {
             })}
           </div>
           <div className="grid grid-cols-2 gap-3 sm:max-w-sm">
-            <ColorInput label="Card background" value={cardColor} onChange={setCardColor} />
+            <ColorInput label={cardImage ? "Picture tint" : "Card background"} value={cardColor} onChange={setCardColor} />
             <ColorInput label="Title & footer" value={accentColor} onChange={setAccentColor} />
           </div>
         </fieldset>
 
         {error && <p className="text-sm text-brand-red">{error}</p>}
 
-        <button type="submit" disabled={submitting || !name.trim()} className="pill-light h-11 self-start px-6 text-sm disabled:pointer-events-none disabled:opacity-50">
-          {submitting ? "Creating…" : "Create community"}
+        <button type="submit" disabled={submitting || !trimmedName || prefixInvalid || nameTakenBy !== null} className="pill-light h-11 self-start px-6 text-sm disabled:pointer-events-none disabled:opacity-50">
+          {submitting ? "Creating…" : event ? "Create event" : "Create community"}
         </button>
       </form>
 
@@ -214,8 +370,12 @@ export function CreateCommunityForm() {
           preview
           id="community-preview"
           memberNo={1}
-          communityName={name.trim() || "Your community"}
+          communityName={previewName}
+          kind={kind}
+          place={place.trim() || null}
           communityLogo={imageUrl || null}
+          cardPrefix={cardPrefix || null}
+          cardImage={cardImage || null}
           name="Member name"
           xHandle="member"
           avatarUrl={null}
@@ -226,7 +386,9 @@ export function CreateCommunityForm() {
           className="w-full"
         />
         <p className="max-w-xs text-center text-xs text-muted-foreground/70">
-          Every member gets a card like this with their own name, handle and picture.
+          {event
+            ? "Everyone who joins gets a pass like this with their own name, handle and picture."
+            : "Every member gets a card like this with their own name, handle and picture."}
         </p>
       </aside>
     </section>
@@ -247,5 +409,93 @@ function ColorInput({ label, value, onChange }: { label: string; value: string; 
         <span className="block font-mono text-[10px] uppercase text-muted-foreground">{value}</span>
       </span>
     </label>
+  );
+}
+
+const KINDS: { value: CardKind; title: string; blurb: string; fields: string; Icon: typeof Users }[] = [
+  {
+    value: "community",
+    title: "Community card",
+    blurb: "A member ID card for an ongoing group, club or team.",
+    fields: "Name · X handle · Community · Role",
+    Icon: Users,
+  },
+  {
+    value: "event",
+    title: "Event card",
+    blurb: "A pass for people who came to one event — no roles, with the place and date.",
+    fields: "Name · X handle · Event · Place · Event date",
+    Icon: CalendarDays,
+  },
+];
+
+// The first step of creating: a popup asking which kind of card to make.
+function KindPicker({
+  current,
+  onPick,
+  onCancel,
+}: {
+  current: CardKind | null;
+  onPick: (kind: CardKind) => void;
+  onCancel: (() => void) | null;
+}) {
+  useEffect(() => {
+    if (!onCancel) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onCancel?.();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-sm">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="kind-picker-title"
+        className="my-auto w-full max-w-lg rounded-2xl border border-border bg-card p-5 sm:p-6"
+      >
+        <h2 id="kind-picker-title" className="text-xl font-bold tracking-tight text-foreground">
+          What are you making?
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">You can change this before you create it.</p>
+        <div className="mt-5 flex flex-col gap-3">
+          {KINDS.map(({ value, title, blurb, fields, Icon }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => onPick(value)}
+              aria-pressed={current === value}
+              className={`flex items-start gap-4 rounded-xl border p-4 text-left transition-colors hover:border-foreground/40 ${
+                current === value ? "border-foreground/60 bg-secondary" : "border-border bg-white/[0.02]"
+              }`}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground">
+                <Icon className="size-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-base font-semibold text-foreground">{title}</span>
+                <span className="mt-0.5 block text-sm text-muted-foreground">{blurb}</span>
+                <span className="mt-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/80">
+                  {fields}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="mt-5 flex justify-end">
+          {onCancel ? (
+            <button type="button" onClick={onCancel} className="pill-outline-light h-10 px-4 text-sm">
+              Cancel
+            </button>
+          ) : (
+            <Link href="/content" className="pill-outline-light h-10 px-4 text-sm">
+              Cancel
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

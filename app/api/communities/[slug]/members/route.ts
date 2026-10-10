@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth";
 import { joinCommunity } from "@/lib/communities";
+import { linkHandleIfUnset } from "@/lib/profiles";
 
 const ERRORS = {
   not_found: { message: "Community not found.", status: 404 },
@@ -30,5 +32,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { message, status } = ERRORS[result.reason];
     return NextResponse.json({ error: message }, { status });
   }
+
+  // No wallet is needed to make a card, but if the maker is signed in, link
+  // the card's handle to their profile so it shows up there.
+  const owner = verifySessionToken(request.cookies.get(SESSION_COOKIE_NAME)?.value);
+  if (owner) await linkHandleIfUnset(owner, result.member.xHandle);
+
   return NextResponse.json({ member: result.member }, { status: 201 });
 }

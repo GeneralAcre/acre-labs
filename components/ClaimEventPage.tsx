@@ -405,7 +405,7 @@ function ClosedBadge({ event, soldOut }: { event: PublicEventWithSupply; soldOut
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <Link href="/badge" className="pill-outline-light inline-flex h-10 w-fit items-center px-4 text-sm font-medium">Back</Link>
 
-        <section className="grid overflow-hidden rounded-2xl border border-border bg-card md:grid-cols-[300px_minmax(0,1fr)]">
+        <section className="grid grid-cols-1 overflow-hidden rounded-2xl border border-border bg-card md:grid-cols-[300px_minmax(0,1fr)]">
           <div className="flex items-center justify-center bg-[radial-gradient(circle_at_50%_40%,#1f1f1f,#0a0a0a_75%)] p-8">
             <div className="rounded-full shadow-[0_0_60px_-12px_rgba(60,131,246,0.45)]">
               <EventBadge title={event.title} imageUrl={event.imageUrl} size={200} />

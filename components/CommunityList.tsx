@@ -24,10 +24,10 @@ export function CommunityList() {
   return (
     <section className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 sm:py-8">
       {communities && communities.length > 0 && (
-        <p className="mb-4 text-sm text-muted-foreground">Choose an event to make your ID card.</p>
+        <p className="mb-4 text-sm text-muted-foreground">Choose a community or event to make your card.</p>
       )}
       {communities === null && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-36 animate-pulse rounded-xl border border-border bg-card motion-reduce:animate-none" />
           ))}
@@ -36,11 +36,11 @@ export function CommunityList() {
 
       {communities?.length === 0 && (
         <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
-          No communities yet — create the first one.
+          No communities or events yet — create the first one.
         </p>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {communities?.map((community) => (
           <Link
             key={community.id}
@@ -55,6 +55,11 @@ export function CommunityList() {
                 memberNo={1}
                 communityName={community.name}
                 communityLogo={community.imageUrl}
+                communitySlug={community.slug}
+                cardPrefix={community.cardPrefix}
+                cardImage={community.cardImage}
+                kind={community.kind}
+                place={community.place}
                 cardColor={community.cardColor}
                 accentColor={community.accentColor}
                 issuedAt={community.issueDate}
@@ -83,9 +88,13 @@ export function CommunityList() {
             )}
             <div className="mt-auto flex items-center justify-between text-xs">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-1 font-medium text-foreground">
-                {community.memberCount} member{community.memberCount === 1 ? "" : "s"}
+                {community.kind === "event" ? "Event" : "Community"} · {community.memberCount}{" "}
+                {community.kind === "event" ? "attendee" : "member"}
+                {community.memberCount === 1 ? "" : "s"}
               </span>
-              <span className="font-semibold text-foreground transition-transform group-hover:translate-x-0.5">Get your card →</span>
+              <span className="font-semibold text-foreground transition-transform group-hover:translate-x-0.5">
+                {community.kind === "event" ? "Get your pass" : "Get your card"} →
+              </span>
             </div>
           </Link>
         ))}

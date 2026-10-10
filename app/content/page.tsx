@@ -7,7 +7,7 @@ type Tab = "communities" | "create";
 
 const TABS: { value: Tab; label: string; href: string; Icon: typeof Users }[] = [
   { value: "communities", label: "Get your card", href: "/content", Icon: Users },
-  { value: "create", label: "Create community", href: "/content?tab=create", Icon: Plus },
+  { value: "create", label: "Create card", href: "/content?tab=create", Icon: Plus },
 ];
 
 export default async function ContentPage({
@@ -24,7 +24,7 @@ export default async function ContentPage({
         <span className="brand-kicker text-muted-foreground">Content</span>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Event cards</h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-          Pick an event below to get your own ID card with your name, X handle, role and photo — or create one for your community.
+          Pick a community or event below to get your own card with your name, X handle and photo — or create cards for your community or event.
         </p>
 
         <nav aria-label="Content" className="mt-6 inline-flex gap-1 rounded-xl border border-border bg-card p-1">

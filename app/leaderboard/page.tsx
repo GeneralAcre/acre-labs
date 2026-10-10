@@ -7,8 +7,8 @@ import type { LeaderboardEntry } from "@/lib/types";
 import { Identicon } from "@/components/Identicon";
 import { useWallet } from "@/components/WalletProvider";
 
-// Podium accents, after traded.gg: gold, silver, bronze.
-const RANK_COLORS = ["#f6c65b", "#cbd5e1", "#d99766"];
+// Podium accents: red, orange, gold.
+const RANK_COLORS = ["#d62828", "#e85d04", "#ffba08"];
 
 const LEVEL_COLORS: Record<string, string> = {
   Legend: "#f6c65b",
@@ -100,7 +100,7 @@ export default function LeaderboardPage() {
         {/* Your standing */}
         <section className="relative isolate overflow-hidden rounded-[22px] border border-white/10 bg-[#0d0d0d] p-5 sm:p-7">
           {mine ? (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
               <div className="flex items-center gap-4 sm:gap-6">
                 <div className="shrink-0 border-r border-white/10 pr-4 sm:pr-7">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Your rank</p>
@@ -144,7 +144,7 @@ export default function LeaderboardPage() {
 
         {/* Podium */}
         {podium.length > 0 && (
-          <section className="grid items-end gap-3 py-9 sm:grid-cols-3 sm:gap-4 lg:py-12">
+          <section className="grid grid-cols-1 items-end gap-3 py-9 sm:grid-cols-3 sm:gap-4 lg:py-12">
             {podium.map((entry, i) => {
               const color = RANK_COLORS[i];
               const order = i === 0 ? "order-1 sm:order-2 sm:min-h-[320px]" : i === 1 ? "order-2 sm:order-1 sm:min-h-[270px]" : "order-3 sm:min-h-[270px]";
@@ -169,7 +169,7 @@ export default function LeaderboardPage() {
                       tone="dark"
                       address={entry.address}
                       size={64}
-                      className={i === 0 ? "shadow-[0_0_0_4px_rgba(246,198,91,.07)] ring-1 ring-amber-300/45" : ""}
+                      className={i === 0 ? "shadow-[0_0_0_4px_rgba(214,40,40,.07)] ring-1 ring-[#d62828]/45" : ""}
                     />
                     <div className="min-w-0">
                       <p className="text-base font-semibold [overflow-wrap:anywhere] sm:text-lg">{nameOf(entry)}</p>
@@ -188,7 +188,7 @@ export default function LeaderboardPage() {
                       </p>
                     </div>
                     {i === 0 && (
-                      <span className="hidden text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-200 sm:block">
+                      <span className="hidden text-[10px] font-semibold uppercase tracking-[0.14em] text-[#d62828] sm:block">
                         Top collector
                       </span>
                     )}

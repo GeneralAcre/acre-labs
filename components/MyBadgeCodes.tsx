@@ -70,7 +70,7 @@ export function MyBadgeCodes() {
           href="/badge?tab=create#badge-tabs"
           className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          Create badge →
+          Create badge
         </Link>
       </div>
 
@@ -96,7 +96,7 @@ export function MyBadgeCodes() {
           You haven&apos;t created any badges yet.
         </p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => {
             const closed = now !== null && now > event.expiresAt;
             const claimUrl = `${origin}/claim/${event.slug}`;

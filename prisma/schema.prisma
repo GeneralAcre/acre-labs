@@ -70,6 +70,20 @@ model Community {
   // "Date of issue" printed on every member card; null falls back to the
   // date each member made their card.
   issueDate    DateTime?
+  // 2-3 letter "No:" prefix on member cards (e.g. "T1T" → T1T-0001); null
+  // falls back to the first two letters of the name.
+  cardPrefix   String?
+  // Optional background picture for the card (client-compressed data: URI,
+  // cropped to the card shape); cardColor still tints it and sets the ink.
+  cardImage    String?
+  // communityNameKey(name): unique, so "team1 thailand" can't be created
+  // next to "Team 1 Thailand".
+  nameKey      String?   @unique
+  // "community" (member ID cards with roles) or "event" (attendee passes
+  // that show the event's place instead of a role).
+  kind         String    @default("community")
+  // Event venue printed on event passes.
+  place        String?
   // Creator's lowercased wallet — null only for the original Team1 Thailand
   // wall, which predates communities.
   ownerAddress String?

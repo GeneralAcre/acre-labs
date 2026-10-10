@@ -60,6 +60,9 @@ export interface CollectedClaim {
 // A community on Content, with its creator resolved to a display name
 // (their profile name, else a shortened address; "AcreLabs" for the original
 // Team1 Thailand wall, which has no wallet owner).
+// What a community's cards are: member ID cards, or passes for one event.
+export type CardKind = "community" | "event";
+
 export interface CommunityRecord {
   id: string;
   slug: string;
@@ -71,6 +74,13 @@ export interface CommunityRecord {
   accentColor: string;
   // "Date of issue" on member cards (ms); null = each member's own join date.
   issueDate: number | null;
+  // "No:" prefix on member cards; null = first two letters of the name.
+  cardPrefix: string | null;
+  // Card background picture (data: URI); null = plain cardColor.
+  cardImage: string | null;
+  kind: CardKind;
+  // Event venue (event cards only).
+  place: string | null;
   ownerAddress: string | null;
   creatorName: string;
   memberCount: number;

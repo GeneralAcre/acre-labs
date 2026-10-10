@@ -37,14 +37,15 @@ export function ProfileMemberCards({ xHandle, isMe }: { xHandle: string | null; 
           <h2 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">Member cards</h2>
         </div>
         <Link href="/content" className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
-          Get a card →
+          Get a card
         </Link>
       </div>
 
       {!xHandle ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
-          Add your X handle with <span className="font-medium text-foreground">Set your name</span> above to show the member
-          cards you made with it.
+          Your member cards show up here once your X handle is linked. Open{" "}
+          <span className="font-medium text-foreground">Set your name</span> (or{" "}
+          <span className="font-medium text-foreground">Edit profile</span>) above and add the X handle you used on your card.
         </p>
       ) : cards === null ? (
         <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
@@ -63,6 +64,11 @@ export function ProfileMemberCards({ xHandle, isMe }: { xHandle: string | null; 
                 memberNo={member.memberNo}
                 communityName={community.name}
                 communityLogo={community.imageUrl}
+                communitySlug={community.slug}
+                cardPrefix={community.cardPrefix}
+                cardImage={community.cardImage}
+                kind={community.kind}
+                place={community.place}
                 cardColor={community.cardColor}
                 accentColor={community.accentColor}
                 issuedAt={community.issueDate}

@@ -13,6 +13,24 @@ export async function getProfile(address: string): Promise<ProfileRecord | null>
   return { address: row.address, displayName: row.displayName, xHandle: row.xHandle };
 }
 
+// After a signed-in wallet makes a member card: if its profile has no X handle
+// yet, link the card's handle so the card shows on that profile (and counts on
+// the leaderboard). Never replaces a handle already set, and silently skips a
+// handle another wallet has linked.
+export async function linkHandleIfUnset(address: string, rawHandle: string): Promise<void> {
+  const xHandle = normalizeXHandle(rawHandle);
+  if (!HANDLE_RE.test(xHandle)) return;
+  const where = { address: address.toLowerCase() };
+  try {
+    const existing = await prisma.profile.findUnique({ where });
+    if (existing?.xHandle) return;
+    await prisma.profile.upsert({ where, create: { ...where, xHandle }, update: { xHandle } });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") return;
+    throw err;
+  }
+}
+
 export type ProfileUpdateFailure = "invalid_name" | "invalid_handle" | "handle_taken";
 export type ProfileUpdateResult =
   | { ok: true; profile: ProfileRecord }
