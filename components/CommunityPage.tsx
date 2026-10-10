@@ -285,7 +285,7 @@ export function CommunityPage({ slug }: { slug: string }) {
                   </span>
                   <input
                     value={memberNoValue}
-                    onChange={(e) => setMemberNoInput(e.target.value.replace(/D/g, "").slice(0, 4))}
+                    onChange={(e) => setMemberNoInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
                     inputMode="numeric"
                     maxLength={4}
                     required
