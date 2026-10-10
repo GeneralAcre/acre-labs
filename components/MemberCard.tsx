@@ -102,7 +102,7 @@ function Field({ label, value }: { label: string; value: string }) {
         text={value}
         maxSize={4.2}
         minSize={1.8}
-        className="mt-[0.6cqw] font-serif uppercase leading-[1.05] tracking-tight"
+        className="mt-[0.6cqw] uppercase leading-[1.05] tracking-tight"
       />
     </div>
   );
@@ -165,8 +165,10 @@ export function MemberCard({
 }) {
   const number = memberIdLabel(communityName, memberNo, cardPrefix);
   const ink = readableTextOn(cardColor);
-  const stripInk = readableTextOn(accentColor);
   const event = kind === "event";
+  // Event passes use a fixed red for the headline and bottom strip.
+  const accent = event ? "#e11d2e" : accentColor;
+  const stripInk = readableTextOn(accent);
 
   const body = (
     <div
@@ -179,6 +181,7 @@ export function MemberCard({
         backgroundSize: "cover",
         backgroundPosition: "center",
         color: ink,
+        fontFamily: "var(--font-kanit), sans-serif",
       }}
     >
       <div className="flex flex-1 gap-[4cqw] px-[4.5cqw] pt-[4cqw]">
@@ -212,7 +215,7 @@ export function MemberCard({
 
         {/* Headline + fields */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <p className="text-right font-serif text-[2.6cqw] lowercase italic leading-none opacity-70">
+          <p className="text-right text-[2.6cqw] lowercase italic leading-none opacity-70">
             {event ? "event pass" : "member id card"}
           </p>
           <div className="mt-[1cqw] flex min-w-0 items-center gap-[1.8cqw]">
@@ -221,13 +224,18 @@ export function MemberCard({
               <img src={communityLogo} alt="" className="h-[9cqw] w-auto max-w-[14cqw] shrink-0 object-contain" />
             ) : null}
             {/* Right/bottom padding leaves room for the italic slant and drop
-                shadow, which the width measurement doesn't include. */}
+                shadow, which the width measurement doesn't include. Event names
+                are red with a dark shadow so they read over a background picture. */}
             <FitText
               text={communityName}
               maxSize={6.4}
               minSize={3}
               className="flex-1 pb-[0.4cqw] pr-[1.4cqw] font-black uppercase italic leading-[0.95] tracking-tight"
-              style={{ color: accentColor, textShadow: `0.25cqw 0.25cqw 0 ${ink}` }}
+              style={
+                event
+                  ? { color: accent, textShadow: "0.25cqw 0.25cqw 0 rgba(0,0,0,0.85)" }
+                  : { color: accentColor, textShadow: `0.25cqw 0.25cqw 0 ${ink}` }
+              }
             />
           </div>
 
@@ -264,8 +272,8 @@ export function MemberCard({
 
       {/* Accent strip */}
       <div
-        className="flex items-center justify-between gap-[2cqw] border-t-[0.4cqw] px-[4.5cqw] py-[1.4cqw] font-serif text-[2.4cqw] leading-none"
-        style={{ backgroundColor: accentColor, color: stripInk, borderColor: ink }}
+        className="flex items-center justify-between gap-[2cqw] border-t-[0.4cqw] px-[4.5cqw] py-[1.4cqw] text-[2.4cqw] leading-none"
+        style={{ backgroundColor: accent, color: stripInk, borderColor: ink }}
       >
         <FitText text={communityName} maxSize={2.4} minSize={1.4} className="flex-1 uppercase leading-none" />
         <span className="shrink-0">{event ? "Verified attendee" : "Verified member"} · AcreLabs</span>

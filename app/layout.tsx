@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Space_Grotesk, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, Inter, Kanit } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Footer } from "@/components/Footer";
@@ -29,6 +29,14 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+// Used on member ID cards and event passes.
+const kanit = Kanit({
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+  variable: "--font-kanit",
+  subsets: ["latin", "thai"],
+});
+
 export const metadata: Metadata = {
   title: "AcreLabs",
   description: "AcreLabs — claim your on-chain proof of attendance on Avalanche.",
@@ -49,7 +57,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} ${kanit.variable} h-full antialiased`}
     >
       {/* Bottom padding on mobile reserves room for Header's fixed tab bar. */}
       <body className="flex min-h-full flex-col bg-background pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
